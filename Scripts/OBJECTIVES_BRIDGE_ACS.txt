@@ -1,0 +1,137 @@
+// ============================================================================
+// objectives_bridge.acs
+// Minimal ACS bridge for calling ZScript objectives from linedefs/buttons
+// 
+// This is a tiny wrapper - all logic stays in ZScript!
+// ============================================================================
+
+#library "objectives_bridge"
+#include "zcommon.acs"
+
+// ============================================================================
+// Complete an objective
+// Usage: Linedef calls ACS_Execute with script "CompleteObjective"
+//        Arg1 = objective description string
+// ============================================================================
+script "CompleteObjective" (int objName)
+{
+    ScriptCall("UniversalObjective", "Complete", objName);
+}
+
+// ============================================================================
+// Update objective progress
+// Usage: Linedef calls ACS_Execute with script "UpdateObjective"
+//        Arg1 = objective description string
+//        Arg2 = new progress value
+// ============================================================================
+script "UpdateObjective" (int objName, int progress)
+{
+    ScriptCall("UniversalObjective", "UpdateProgress", objName, progress);
+}
+
+// ============================================================================
+// Signal that a switch was activated
+// Usage: Linedef calls ACS_Execute with script "SwitchActivated"
+//        Your ObjectiveSetup handler can track the count
+// ============================================================================
+script "SwitchActivated" (void)
+{
+    // Send network event via console command
+    ConsoleCommand("netevent switch_activated");
+}
+
+// ============================================================================
+// Signal that a secret was found
+// Usage: Place on secret linedef or sector
+// ============================================================================
+script "SecretFound" (void)
+{
+    // Send network event via console command
+    ConsoleCommand("netevent secret_found");
+}
+
+// ============================================================================
+// CONSOLE COMMANDS - Developer/Debug Tools
+// Call these directly from console for testing
+// ============================================================================
+
+// List all current objectives
+// Usage in console: pukename obj_list
+script "obj_list" (void)
+{
+    ConsoleCommand("netevent obj_list");
+}
+
+// Clear all objectives
+// Usage in console: pukename obj_clear
+script "obj_clear" (void)
+{
+    ConsoleCommand("netevent obj_clear");
+}
+
+// Add test objectives for debugging
+// Usage in console: pukename obj_test
+script "obj_test" (void)
+{
+    ConsoleCommand("netevent obj_test");
+}
+
+// Complete an objective by name
+// Usage in console: pukename obj_complete_test
+// (Completes first objective as a test)
+script "obj_complete_test" (void)
+{
+    ConsoleCommand("netevent obj_complete_test");
+}
+
+// ============================================================================
+// Generic objective trigger by name
+// Useful for one-off triggers that don't need custom logic
+// Usage: Arg1 = objective description to complete
+// ============================================================================
+script "TriggerObjective" (int objName)
+{
+    ScriptCall("UniversalObjective", "Complete", objName);
+}
+
+// ============================================================================
+// EXAMPLE USAGE IN MAP EDITOR:
+// ============================================================================
+//
+// Button that completes "Find the generator":
+//   Linedef Action: ACS_Execute (80)
+//   Script: "CompleteObjective"
+//   Arg1: "Find the generator"
+//
+// Switch that counts activations:
+//   Linedef Action: ACS_Execute (80)
+//   Script: "SwitchActivated"
+//   (Your ZScript handler increments counter and updates objective)
+//
+// Secret sector that completes objective:
+//   Sector Type: Secret (9)
+//   Also add linedef: ACS_Execute
+//   Script: "CompleteObjective"
+//   Arg1: "Find the secret"
+//
+// ============================================================================
+// CONSOLE COMMANDS FOR TESTING:
+// ============================================================================
+//
+// obj_list           - List all current objectives
+// obj_clear          - Clear all objectives
+// obj_test           - Add test objectives (Imps, Cacodemons)
+// obj_complete_test  - Complete first active objective
+// obj_complete_all   - Complete ALL active objectives
+//
+// ============================================================================
+// COMPILE WITH:
+// ============================================================================
+//
+// In SLADE: Right Click On OBJECTIVES_BRIDGE_ACS.txt -> Script -> Compile ACS
+// Or use acc.exe: acc OBJECTIVES_BRIDGE_ACS.txt
+//
+// Output: OBJECTIVES_BRIDGE_ACS.o (compiled bytecode)
+// GZDoom loads .acs files automatically if they're in the /ACS/ folder
+//
+// ============================================================================

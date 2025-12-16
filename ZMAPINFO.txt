@@ -1,0 +1,11 @@
+// ============================================================================
+// Reference Objective Events
+// ============================================================================
+gameinfo
+{
+	AddEventHandlers = "UniversalObjectiveHandler"
+	AddEventHandlers = "ObjectiveSetup"
+	
+	// Optional add-on that fades objectives when multiple pickup messages show
+	AddEventHandlers = "ObjectiveFadeHandler"
+}

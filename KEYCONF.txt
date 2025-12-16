@@ -1,0 +1,19 @@
+// ============================================================================
+// Objective System Controls
+// ============================================================================
+addkeysection "Objectives" obj_controls
+addmenukey "Toggle Objectives Screen" toggle_objectives
+alias toggle_objectives "netevent toggle_objectives"
+defaultbind j toggle_objectives
+addmenukey "Toggle Objectives HUD" toggle_objectives_hud
+alias toggle_objectives_hud "netevent toggle_objectives_hud"
+defaultbind o toggle_objectives_hud
+
+// ============================================================================
+// Developer/Debug Commands (Console only)
+// ============================================================================
+alias obj_list "netevent obj_list"
+alias obj_clear "netevent obj_clear"
+alias obj_complete_all "netevent obj_complete_all"
+alias obj_test "netevent obj_test"
+alias obj_complete_test "netevent obj_complete_test"

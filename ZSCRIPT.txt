@@ -1,0 +1,12 @@
+version "4.2.0"
+
+// ============================================================================
+// Reference Objective ZScript Classes and Methods
+// ============================================================================
+#include "zscript/objectives/UniversalObjective.zs"
+#include "zscript/objectives/UniversalObjectiveHandler.zs"
+#include "zscript/objectives/ObjectiveCommands.zs"
+#include "zscript/objectives/ObjectiveSetup.zs"
+
+// Optional add-on that fades objectives when multiple pickup messages show
+#include "zscript/objectives/ObjectiveFadeHandler_Optional.zs"

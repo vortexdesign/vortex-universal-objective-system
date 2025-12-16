@@ -1,0 +1,7 @@
+// ============================================================================
+// Objective CVARs
+// ============================================================================
+// Full Objectives Screen display (with background, 2-column, shows all)
+user bool obj_show = false;
+// HUD Objectives display (simple list, only incomplete objectives)
+user bool obj_hud_show = true;
