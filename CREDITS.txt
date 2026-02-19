@@ -1,9 +1,9 @@
 Vortex's Universal Objective System
-Copyright (c) 2025 Vortex
+Copyright (c) 2026 Vortex
 
 License:
 - Code is licensed under the MIT License (see LICENSE file).
 
 Credit (appreciated, not required):
 If you use this in your mod/project, please include a credit like:
-"Universal Objective System by Vortex based on Blade of Agony"
+"Universal Objective System by Vortex"

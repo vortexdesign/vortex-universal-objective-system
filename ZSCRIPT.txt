@@ -3,10 +3,13 @@ version "4.2.0"
 // ============================================================================
 // Reference Objective ZScript Classes and Methods
 // ============================================================================
-#include "zscript/objectives/UniversalObjective.zs"
+#include "zscript/objectives/UniversalObjectiveDataAndContainer.zs"
 #include "zscript/objectives/UniversalObjectiveHandler.zs"
 #include "zscript/objectives/ObjectiveCommands.zs"
 #include "zscript/objectives/ObjectiveSetup.zs"
-
-// Optional add-on that fades objectives when multiple pickup messages show
-#include "zscript/objectives/ObjectiveFadeHandler_Optional.zs"
+#include "zscript/objectives/ObjectiveCompass.zs"
+#include "zscript/objectives/ObjectiveWaypoints.zs"
+#include "zscript/objectives/ObjectiveRenderer.zs"
+#include "zscript/objectives/ObjectiveAutomapOverlay.zs"
+#include "zscript/objectives/ObjectiveAutomap.zs"
+#include "zscript/objectives/ObjectiveMinimapBridge.zs" // Optional for use with Cynic Games Minimap mod

@@ -1,0 +1,193 @@
+// ============================================================================
+// Universal Objectives System - Settings Menu
+// ============================================================================
+// Uses AddOptionMenu to non-destructively add to the Options menu
+// so this mod plays nicely alongside other mods.
+
+AddOptionMenu "OptionsMenu"
+{
+	StaticText ""
+	Submenu "Universal Objectives", "UniversalObjectivesMenu"
+}
+
+AddOptionMenu "OptionsMenuSimple"
+{
+	StaticText ""
+	Submenu "Universal Objectives", "UniversalObjectivesMenu"
+}
+
+// Color name lookup for Font.CR_ indices
+OptionValue "ObjColorValues"
+{
+	0, "Brick"
+	1, "Tan"
+	2, "Gray"
+	3, "Green"
+	4, "Brown"
+	5, "Gold"
+	6, "Red"
+	7, "Blue"
+	8, "Orange"
+	9, "White"
+	10, "Yellow"
+	11, "Untranslated"
+	12, "Black"
+	13, "Light Blue"
+	14, "Cream"
+	15, "Olive"
+	16, "Dark Green"
+	17, "Dark Red"
+	18, "Dark Brown"
+	19, "Purple"
+	20, "Dark Gray"
+	21, "Cyan"
+	22, "Ice"
+	23, "Fire"
+	24, "Sapphire"
+	25, "Teal"
+}
+
+OptionMenu "UniversalObjectivesMenu"
+{
+	Title "Universal Objectives Settings"
+	
+	// ---- HUD Settings ----
+	StaticText "HUD Settings", 1
+	Option "Show HUD Objectives", "obj_hud_show", "OnOff"
+	Option "Show Untracked Objectives", "obj_hud_show_untracked", "OnOff"
+	Option "HUD Position", "obj_hud_position", "ObjHudPositionValues"
+	Option "Show Distance to Objectives", "obj_show_distance", "OnOff"
+	Option "Distance Text Color", "obj_color_distance", "ObjColorValues"
+	Slider "HUD Scale", "obj_hud_scale", 0.5, 2.0, 0.05, 2
+	Slider "HUD X Adjustment", "obj_hud_offset_x", -400, 400, 5, 0
+	Slider "HUD Y Adjustment", "obj_hud_offset_y", -300, 300, 5, 0
+
+	StaticText ""
+
+	// ---- Compass Ribbon Settings ----
+	StaticText "Compass Ribbon", 1
+	Option "Show Compass", "obj_compass_show", "OnOff"
+	Option "Compass Style", "obj_compass_style", "ObjCompassStyleValues"
+	Option "Show Distance on Compass", "obj_compass_show_distance", "OnOff"
+	Slider "Distance Text Scale", "obj_compass_text_scale", 0.5, 3.0, 0.05, 2
+	Slider "Compass Opacity", "obj_compass_opacity", 0.1, 1.0, 0.05, 2
+	Slider "Compass Scale", "obj_compass_scale", 0.5, 2.0, 0.05, 2
+	Slider "Compass FOV (degrees)", "obj_compass_fov", 45, 360, 15, 0
+	Slider "Compass X Adjustment", "obj_compass_offset_x", -300, 300, 5, 0
+	Slider "Compass Y Adjustment", "obj_compass_offset_y", -100, 200, 5, 0
+
+	StaticText ""
+
+	// ---- On-Screen Waypoint Indicators ----
+	StaticText "Waypoint Indicators", 1
+	Option "Waypoint Indicators", "obj_waypoint_mode", "ObjWaypointModeValues"
+	Option "Waypoint Style", "obj_waypoint_style", "ObjWaypointStyleValues"
+	Slider "Indicator Scale", "obj_waypoint_scale", 0.25, 3.0, 0.25, 2
+	Slider "Distance Text Scale", "obj_waypoint_text_scale", 0.5, 3.0, 0.25, 2
+	Slider "Max Display Distance (0=always)", "obj_waypoint_max_distance", 0, 500, 10, 0
+
+	StaticText ""
+
+	// ---- Journal Settings ----
+	StaticText "Journal Settings", 1
+	Slider "Journal Scale", "obj_journal_scale", 0.5, 1.5, 0.05, 2
+	Slider "Journal X Adjustment", "obj_journal_offset_x", -400, 400, 5, 0
+	Slider "Journal Y Adjustment", "obj_journal_offset_y", -300, 300, 5, 0
+
+	StaticText ""
+
+	// ---- Notification Timing ----
+	StaticText "Notifications", 1
+	Slider "Notification Duration (tics)", "obj_notification_duration", 35, 350, 5, 0
+	Option "Show in Center", "obj_center_notifications", "OnOff"
+	Option "Log to Console", "obj_console_notifications", "OnOff"
+	Option "Dim on Pickup", "obj_pickup_fade", "OnOff"
+
+	StaticText ""
+
+	// ---- Distance / Waypoint Settings ----
+	StaticText "Distance Display", 1
+	Option "Distance Units", "obj_distance_units", "ObjDistanceUnitValues"
+
+	StaticText ""
+
+	// ---- Automap Settings ----
+	StaticText "Automap (Applied After Closing Menu)", 1
+	Option "Show Waypoint Markers", "obj_automap_markers", "OnOff"
+	Option "Marker Style", "obj_automap_marker_style", "ObjAutomapMarkerStyleValues"
+
+	StaticText ""
+
+	// ---- Automap Legend ----
+	StaticText "Automap Legend", 1
+	Option "Show Objective Legend", "obj_automap_legend", "OnOff"
+	Slider "Legend Scale", "obj_automap_legend_scale", 0.5, 2.0, 0.05, 2
+	Option "Show Completed/Failed", "obj_automap_show_completed", "OnOff"
+
+	StaticText ""
+
+	// ---- Header Colors ----
+	StaticText "Header Colors", 1
+	Option "Primary Header", "obj_color_primary_header", "ObjColorValues"
+	Option "Secondary Header", "obj_color_secondary_header", "ObjColorValues"
+	
+	StaticText ""
+	
+	// ---- Objective State Colors ----
+	StaticText "Objective Colors", 1
+	Option "Active / Incomplete", "obj_color_active", "ObjColorValues"
+	Option "Completed", "obj_color_completed", "ObjColorValues"
+	Option "Failed", "obj_color_failed", "ObjColorValues"
+	
+	StaticText ""
+	
+	// ---- Center Notification Colors ----
+	StaticText "Notification Colors", 1
+	Option "Complete Notification", "obj_color_complete_notify", "ObjColorValues"
+	Option "Fail Notification", "obj_color_fail_notify", "ObjColorValues"
+
+	StaticText ""
+
+	// ---- Debug ----
+	StaticText "Debug", 1
+	Option "Debug Console Output", "obj_debug", "OnOff"
+}
+
+OptionValue "ObjHudPositionValues"
+{
+	0, "Top-Left"
+	1, "Top-Right"
+	2, "Bottom-Left"
+	3, "Bottom-Right"
+}
+
+OptionValue "ObjDistanceUnitValues"
+{
+	0, "Map Units"
+	1, "Meters"
+}
+
+OptionValue "ObjCompassStyleValues"
+{
+	0, "Procedural"
+	1, "Textured"
+}
+
+OptionValue "ObjWaypointStyleValues"
+{
+	0, "Procedural"
+	1, "Textured"
+}
+
+OptionValue "ObjAutomapMarkerStyleValues"
+{
+	0, "X Markers"
+	1, "Numbered"
+}
+
+OptionValue "ObjWaypointModeValues"
+{
+	0, "Always On"
+	1, "Always Off"
+	2, "Toggle with Objectives HUD"
+}

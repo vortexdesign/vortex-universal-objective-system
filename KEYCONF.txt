@@ -8,10 +8,20 @@ defaultbind j toggle_objectives
 addmenukey "Toggle Objectives HUD" toggle_objectives_hud
 alias toggle_objectives_hud "netevent toggle_objectives_hud"
 defaultbind o toggle_objectives_hud
+addmenukey "Cycle HUD Position" cycle_hud_position
+alias cycle_hud_position "netevent cycle_hud_position"
+defaultbind p cycle_hud_position
+addmenukey "Toggle Waypoints" cycle_waypoint_mode
+alias cycle_waypoint_mode "netevent cycle_waypoint_mode"
+defaultbind i cycle_waypoint_mode
+addmenukey "Toggle Compass" toggle_compass
+alias toggle_compass "netevent toggle_compass"
+defaultbind c toggle_compass
 
 // ============================================================================
 // Developer/Debug Commands (Console only)
 // ============================================================================
+alias obj_help "netevent obj_help"
 alias obj_list "netevent obj_list"
 alias obj_clear "netevent obj_clear"
 alias obj_complete_all "netevent obj_complete_all"

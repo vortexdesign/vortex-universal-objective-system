@@ -3,9 +3,8 @@
 // ============================================================================
 gameinfo
 {
-	AddEventHandlers = "UniversalObjectiveHandler"
-	AddEventHandlers = "ObjectiveSetup"
-	
-	// Optional add-on that fades objectives when multiple pickup messages show
-	AddEventHandlers = "ObjectiveFadeHandler"
+	AddEventHandlers = "VUOS_ObjectiveSetup"
+	AddEventHandlers = "VUOS_ObjectiveRenderer"
+	AddEventHandlers = "VUOS_ObjectiveCommands"
+	AddEventHandlers = "VUOS_ObjectiveMinimapBridge" // Optional for use with Cynic Games Minimap mod
 }

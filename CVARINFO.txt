@@ -5,3 +5,133 @@
 user bool obj_show = false;
 // HUD Objectives display (simple list, only incomplete objectives)
 user bool obj_hud_show = true;
+// HUD position: 0=top-left (default), 1=top-right, 2=bottom-left, 3=bottom-right
+user int obj_hud_position = 0;
+
+// Show untracked objectives on HUD (when false, only tracked objectives appear on HUD list)
+user bool obj_hud_show_untracked = false;
+
+// ============================================================================
+// Notification / Fade Settings
+// ============================================================================
+// Duration in tics for objective completion/failure/required messages (35 tics = 1 second)
+// Default: 105 (3 seconds). Fade-in and fade-out are each 1/3 of this duration.
+user int obj_notification_duration = 105;
+// Log objective notifications to the console (visible in console history)
+user bool obj_console_notifications = false;
+// Show objective notifications in center of screen (on by default)
+user bool obj_center_notifications = true;
+// Enable/disable HUD dimming when picking up items (on by default)
+user bool obj_pickup_fade = true;
+
+// ============================================================================
+// Manual HUD Position Adjustment
+// ============================================================================
+// Additional X/Y adjustment applied on top of the selected HUD position (0-3)
+// Use these to fine-tune placement if the 4 preset positions aren't ideal.
+// Positive X = right, Negative X = left
+// Positive Y = down, Negative Y = up
+user int obj_hud_offset_x = 0;
+user int obj_hud_offset_y = 0;
+// HUD scale multiplier (0.5-2.0, default 0.75)
+user float obj_hud_scale = 0.75;
+
+// Additional X/Y adjustment for the full objectives screen (journal view)
+user int obj_journal_offset_x = 0;
+user int obj_journal_offset_y = 0;
+// Journal scale multiplier (0.5-1.5, default 0.75)
+user float obj_journal_scale = 0.75;
+
+// ============================================================================
+// Color Settings
+// ============================================================================
+// All color values use GZDoom Font.CR_ color indices.
+//
+// COLOR REFERENCE:
+//  0 = Brick        1 = Tan          2 = Gray         3 = Green
+//  4 = Brown        5 = Gold         6 = Red          7 = Blue
+//  8 = Orange       9 = White       10 = Yellow      11 = Untranslated
+// 12 = Black       13 = LightBlue   14 = Cream       15 = Olive
+// 16 = DarkGreen   17 = DarkRed     18 = DarkBrown   19 = Purple
+// 20 = DarkGray    21 = Cyan        22 = Ice         23 = Fire
+// 24 = Sapphire    25 = Teal
+//
+// Header colors for objective categories
+user int obj_color_primary_header = 3;           // Font.CR_GREEN
+user int obj_color_secondary_header = 21;        // Font.CR_CYAN
+// Objective state colors
+user int obj_color_active = 9;                   // Font.CR_WHITE
+user int obj_color_completed = 3;                // Font.CR_GREEN
+user int obj_color_failed = 6;                   // Font.CR_RED
+// Center-screen notification header colors
+user int obj_color_complete_notify = 5;          // Font.CR_GOLD
+user int obj_color_fail_notify = 6;              // Font.CR_RED
+
+// ============================================================================
+// Distance / Waypoint Settings
+// ============================================================================
+// Show distance to waypoint objectives on HUD
+user bool obj_show_distance = true;
+// Distance units: 0 = raw map units, 1 = meters (32 map units ≈ 1 meter)
+user int obj_distance_units = 1;
+// Distance text color (default: 10 = CR_YELLOW)
+user int obj_color_distance = 10;
+
+// ============================================================================
+// Automap Settings
+// ============================================================================
+// Show waypoint markers on the automap
+user bool obj_automap_markers = true;
+// Automap marker style: 0 = X markers, 1 = numbered markers (1-9)
+user int obj_automap_marker_style = 0;
+// Show objective legend overlay on the automap
+user bool obj_automap_legend = true;
+// Automap legend scale multiplier (0.5-2.0, default 0.95)
+user float obj_automap_legend_scale = 0.95;
+// Show completed/failed objectives on automap markers and legend
+user bool obj_automap_show_completed = true;
+
+// ============================================================================
+// On-Screen Waypoint Indicator Settings
+// ============================================================================
+// Waypoint indicator mode: 0 = always on, 1 = always off, 2 = toggle with objectives HUD (O key)
+user int obj_waypoint_mode = 2;
+// Waypoint indicator scale multiplier (0.25-3.0, default 1.0)
+user float obj_waypoint_scale = 1.0;
+// Waypoint distance text scale multiplier (0.5-3.0, default 1.0)
+user float obj_waypoint_text_scale = 0.75;
+// Maximum distance to show waypoint indicators (0 = always show, >0 = hide beyond this distance in map units)
+user int obj_waypoint_max_distance = 0;
+// Waypoint rendering style: 0 = procedural (drawn with lines), 1 = textured (uses WPDMND graphic).
+// Falls back to procedural if textures are not found.
+user int obj_waypoint_style = 0;
+
+// ============================================================================
+// Compass Ribbon Settings
+// ============================================================================
+// Show compass ribbon at top of screen (independent of HUD/journal mode)
+user bool obj_compass_show = true;
+// Compass rendering style: 0 = procedural (built-in lines/shapes), 1 = textured (uses graphics lumps)
+// When set to 1, looks for COMPRIB, COMPDMND, COMPTICK, COMPCHVR in Graphics/.
+// Falls back to procedural if textures are not found.
+user int obj_compass_style = 0;
+// Compass ribbon opacity (0.0 = invisible, 1.0 = fully opaque). Scaled by pickup fade.
+user float obj_compass_opacity = 0.90;
+// Fine-tune compass X position (positive = right, negative = left)
+user int obj_compass_offset_x = 0;
+// Fine-tune compass Y position (positive = down, negative = up)
+user int obj_compass_offset_y = 0;
+// Degrees shown on the compass ribbon (45-360, default 180)
+user int obj_compass_fov = 180;
+// Compass scale multiplier (0.5-2.0, default 0.7)
+user float obj_compass_scale = 0.75;
+// Show distance below objective diamonds on compass
+user bool obj_compass_show_distance = true;
+// Scale multiplier for distance text below compass diamonds (0.5-3.0, default 1.0)
+user float obj_compass_text_scale = 0.75;
+
+// ============================================================================
+// Debug Settings
+// ============================================================================
+// Enable verbose debug output to the console (for development/troubleshooting)
+user bool obj_debug = false;

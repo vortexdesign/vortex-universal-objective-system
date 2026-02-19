@@ -15,7 +15,7 @@
 // ============================================================================
 script "CompleteObjective" (int objName)
 {
-    ScriptCall("UniversalObjective", "Complete", objName);
+    ScriptCall("VUOS_ObjectiveHandler", "Complete", objName);
 }
 
 // ============================================================================
@@ -26,7 +26,7 @@ script "CompleteObjective" (int objName)
 // ============================================================================
 script "UpdateObjective" (int objName, int progress)
 {
-    ScriptCall("UniversalObjective", "UpdateProgress", objName, progress);
+    ScriptCall("VUOS_ObjectiveHandler", "UpdateProgress", objName, progress);
 }
 
 // ============================================================================
@@ -36,8 +36,7 @@ script "UpdateObjective" (int objName, int progress)
 // ============================================================================
 script "SwitchActivated" (void)
 {
-    // Send network event via console command
-    ConsoleCommand("netevent switch_activated");
+    ScriptCall("VUOS_ObjectiveHandler", "ACS_SwitchActivated");
 }
 
 // ============================================================================
@@ -46,8 +45,26 @@ script "SwitchActivated" (void)
 // ============================================================================
 script "SecretFound" (void)
 {
-    // Send network event via console command
-    ConsoleCommand("netevent secret_found");
+    ScriptCall("VUOS_ObjectiveHandler", "ACS_SecretFound");
+}
+
+// ============================================================================
+// Check objectives and exit
+// 
+// THIS IS REQUIRED FOR TRUE EXIT BLOCKING!
+// 
+// Usage in your map editor (SLADE/Ultimate Doom Builder):
+//   1. Find the exit linedef (usually Special 11, 52, or 124)
+//   2. Change Special to: 80 (ACS_Execute)  
+//   3. Set Script Name to: CheckObjectivesAndExit
+//   4. Save the map
+// 
+// Now the exit will only work when all required primary objectives are complete.
+// Without this, ZScript can only show warning messages but can't prevent exit.
+// ============================================================================
+script "CheckObjectivesAndExit" (void)
+{
+    ScriptCall("VUOS_ObjectiveHandler", "ACS_CheckObjectivesAndExit");
 }
 
 // ============================================================================
@@ -59,21 +76,21 @@ script "SecretFound" (void)
 // Usage in console: pukename obj_list
 script "obj_list" (void)
 {
-    ConsoleCommand("netevent obj_list");
+    ScriptCall("VUOS_ObjectiveHandler", "ACS_SendEvent", "obj_list");
 }
 
 // Clear all objectives
 // Usage in console: pukename obj_clear
 script "obj_clear" (void)
 {
-    ConsoleCommand("netevent obj_clear");
+    ScriptCall("VUOS_ObjectiveHandler", "ACS_SendEvent", "obj_clear");
 }
 
 // Add test objectives for debugging
 // Usage in console: pukename obj_test
 script "obj_test" (void)
 {
-    ConsoleCommand("netevent obj_test");
+    ScriptCall("VUOS_ObjectiveHandler", "ACS_SendEvent", "obj_test");
 }
 
 // Complete an objective by name
@@ -81,15 +98,159 @@ script "obj_test" (void)
 // (Completes first objective as a test)
 script "obj_complete_test" (void)
 {
-    ConsoleCommand("netevent obj_complete_test");
+    ScriptCall("VUOS_ObjectiveHandler", "ACS_SendEvent", "obj_complete_test");
+}
+
+// Complete ALL active objectives for the current map
+// Usage in console: pukename obj_complete_all
+script "obj_complete_all" (void)
+{
+    ScriptCall("VUOS_ObjectiveHandler", "ACS_SendEvent", "obj_complete_all");
 }
 
 // ============================================================================
-// Generic objective trigger by name
-// Useful for one-off triggers that don't need custom logic
-// Usage: Arg1 = objective description to complete
+// Set a waypoint position for an objective
+// Usage: Linedef calls ACS_Execute with script "SetObjectiveWaypoint"
+//        Arg1 = objective description string
+//        Arg2 = X world position
+//        Arg3 = Y world position
+//        Arg4 = Z world position
 // ============================================================================
-script "TriggerObjective" (int objName)
+script "SetObjectiveWaypoint" (int objName, int x, int y, int z)
 {
-    ScriptCall("UniversalObjective", "Complete", objName);
+    ScriptCall("VUOS_ObjectiveHandler", "SetWaypoint", objName, x, y, z);
 }
+
+// ============================================================================
+// Fail an objective
+// Usage: Linedef calls ACS_Execute with script "FailObjective"
+//        Arg1 = objective description string
+// ============================================================================
+script "FailObjective" (int objName)
+{
+    ScriptCall("VUOS_ObjectiveHandler", "Fail", objName);
+}
+
+// ============================================================================
+// Increment objective progress by 1
+// Usage: Linedef calls ACS_Execute with script "IncrementObjective"
+//        Arg1 = objective description string
+// Auto-completes or auto-fails (if inverse) when targetCount is reached
+// ============================================================================
+script "IncrementObjective" (int objName)
+{
+    ScriptCall("VUOS_ObjectiveHandler", "IncrementProgress", objName);
+}
+
+// ============================================================================
+// Show or hide an objective
+// Usage: Linedef calls ACS_Execute with script "SetObjectiveHidden"
+//        Arg1 = objective description string
+//        Arg2 = 1 to hide, 0 to show
+// ============================================================================
+script "SetObjectiveHidden" (int objName, int hidden)
+{
+    ScriptCall("VUOS_ObjectiveHandler", "SetHidden", objName, hidden);
+}
+
+// ============================================================================
+// Reset a completed or failed objective back to active
+// Usage: Linedef calls ACS_Execute with script "ResetObjective"
+//        Arg1 = objective description string
+// ============================================================================
+script "ResetObjective" (int objName)
+{
+    ScriptCall("VUOS_ObjectiveHandler", "ResetObjective", objName);
+}
+
+// ============================================================================
+// EXAMPLE USAGE IN MAP EDITOR:
+// ============================================================================
+//
+// *** MOST IMPORTANT: EXIT BLOCKING ***
+// To actually prevent exits until objectives are complete:
+//   1. Open your map in SLADE or Ultimate Doom Builder
+//   2. Find the exit linedef (Special 11 = S1 Exit, 52 = W1 Exit, etc)
+//   3. Change linedef Special to: 80 (ACS_Execute)
+//   4. Set Script Name to: CheckObjectivesAndExit
+//   5. Leave all Args at 0
+//   6. Save the map
+//   Result: Exit now ONLY works when all required primary objectives complete
+//
+// Other examples:
+//
+// Button that completes "Find the generator":
+//   Linedef Action: ACS_Execute (80)
+//   Script: "CompleteObjective"
+//   Arg1: "Find the generator"
+//
+// Button that fails "Protect the reactor":
+//   Linedef Action: ACS_Execute (80)
+//   Script: "FailObjective"
+//   Arg1: "Protect the reactor"
+//
+// Switch that increments objective progress by 1:
+//   Linedef Action: ACS_Execute (80)
+//   Script: "IncrementObjective"
+//   Arg1: "Activate 3 power switches"
+//
+// Switch that counts activations (legacy netevent method):
+//   Linedef Action: ACS_Execute (80)
+//   Script: "SwitchActivated"
+//   (Your ZScript handler increments counter and updates objective)
+//
+// Trigger that reveals a hidden objective:
+//   Linedef Action: ACS_Execute (80)
+//   Script: "SetObjectiveHidden"
+//   Arg1: "Escape the collapsing base"
+//   Arg2: 0 (0 = show, 1 = hide)
+//
+// Trigger that resets a failed objective for a retry:
+//   Linedef Action: ACS_Execute (80)
+//   Script: "ResetObjective"
+//   Arg1: "Survive the ambush"
+//
+// Secret sector that completes objective:
+//   Sector Type: Secret (9)
+//   Also add linedef: ACS_Execute
+//   Script: "CompleteObjective"
+//   Arg1: "Find the secret"
+//
+// ============================================================================
+// EXIT BLOCKING - ADDITIONAL NOTES:
+// ============================================================================
+//
+// Without editing the map to use ACS:
+//   - ZScript shows warning message when player enters exit area
+//   - Player still exits the map (can't be prevented by ZScript alone)
+//   - Works as a "soft" reminder but isn't enforced
+//
+// After editing the map to use ACS:
+//   - Exit physically doesn't work until objectives complete
+//   - Player sees warning message and error sound
+//   - Exit only activates when all required primary objectives are done
+//
+// You only need to edit the exit linedef once per map.
+// All objective logic stays in ZScript - ACS just checks and calls exit.
+//
+// ============================================================================
+// CONSOLE COMMANDS FOR TESTING:
+// ============================================================================
+//
+// obj_list           - List all current objectives
+// obj_clear          - Clear all objectives
+// obj_test           - Add test objectives (Imps, Cacodemons)
+// obj_complete_test  - Complete first active objective
+// obj_complete_all   - Complete ALL active objectives
+//
+// ============================================================================
+// COMPILE WITH:
+// ============================================================================
+//
+// In SLADE: Right Click On OBJECTIVES_BRIDGE_ACS.txt -> Script -> Compile ACS
+// Or use acc.exe: acc OBJECTIVES_BRIDGE_ACS.txt
+//
+// Output: OBJECTIVES_BRIDGE_ACS.o (compiled bytecode)
+// GZDoom loads .acs files automatically if they're in the /ACS/ folder
+//
+// ============================================================================
