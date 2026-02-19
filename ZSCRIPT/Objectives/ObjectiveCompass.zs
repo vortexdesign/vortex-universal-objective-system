@@ -190,8 +190,8 @@ class VUOS_ObjectiveCompass ui
             // Skip if outside FOV
             if (abs(delta) > halfFOV) continue;
             
-            // Position on ribbon: delta=0 is center, -halfFOV is left edge, +halfFOV is right edge
-            double fraction = (delta + halfFOV) / compassFOV;
+            // Position on ribbon: negate delta because DeltaAngle positive = CCW = left on screen
+            double fraction = (-delta + halfFOV) / compassFOV;
             double labelX = ribbonX + (fraction * ribbonWidth);
             
             // Choose color: major cardinals brighter
@@ -243,7 +243,7 @@ class VUOS_ObjectiveCompass ui
             double delta = Actor.DeltaAngle(viewAngle, deg);
             if (abs(delta) > halfFOV) continue;
 
-            double fraction = (delta + halfFOV) / compassFOV;
+            double fraction = (-delta + halfFOV) / compassFOV;
             int tickSX = int((ribbonX + fraction * ribbonWidth) * scaleX);
             int tickLen = int(MINOR_TICK_HEIGHT * scaleY);
 
