@@ -129,6 +129,8 @@ user float obj_compass_scale = 0.75;
 user bool obj_compass_show_distance = true;
 // Scale multiplier for distance text below compass diamonds (0.5-3.0, default 1.0)
 user float obj_compass_text_scale = 0.75;
+// Show azimuth bearing numbers (0-360) on compass ribbon at tick positions
+user bool obj_compass_show_bearing = true;
 
 // ============================================================================
 // Debug Settings

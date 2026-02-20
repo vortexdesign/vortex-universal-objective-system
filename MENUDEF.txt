@@ -69,6 +69,7 @@ OptionMenu "UniversalObjectivesMenu"
 	Option "Show Compass", "obj_compass_show", "OnOff"
 	Option "Compass Style", "obj_compass_style", "ObjCompassStyleValues"
 	Option "Show Distance on Compass", "obj_compass_show_distance", "OnOff"
+	Option "Show Bearing Numbers", "obj_compass_show_bearing", "OnOff"
 	Slider "Distance Text Scale", "obj_compass_text_scale", 0.5, 3.0, 0.05, 2
 	Slider "Compass Opacity", "obj_compass_opacity", 0.1, 1.0, 0.05, 2
 	Slider "Compass Scale", "obj_compass_scale", 0.5, 2.0, 0.05, 2

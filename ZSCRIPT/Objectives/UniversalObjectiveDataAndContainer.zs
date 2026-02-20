@@ -91,6 +91,7 @@ class VUOS_RenderSettings
     double compassScale;
     bool compassShowDistance;
     double compassTextScale;
+    bool compassShowBearing;  // Show azimuth bearing numbers (0-360) at tick positions
 
     // Waypoint settings
     double waypointScale;
@@ -126,6 +127,7 @@ class VUOS_RenderSettings
         compassTextScale = VUOS_ObjectiveHandler.GetCVarFloat('obj_compass_text_scale', p, 0.75);
         if (compassTextScale < 0.5) compassTextScale = 0.5;
         if (compassTextScale > 3.0) compassTextScale = 3.0;
+        compassShowBearing = VUOS_ObjectiveHandler.GetCVarBool('obj_compass_show_bearing', p, true);
 
         // Waypoints
         waypointScale = VUOS_ObjectiveHandler.GetCVarFloat('obj_waypoint_scale', p, 1.0);

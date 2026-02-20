@@ -63,6 +63,11 @@ class VUOS_ObjectiveCompass ui
     const DIST_TEXT_GAP      = 4;     // Gap below diamond to distance text (pixels, scaled)
     const DIST_TEXT_ALPHA    = 0.65;  // Alpha multiplier for distance text
 
+    // Bearing text (rendered below the ribbon at reduced scale)
+    const BEARING_TEXT_ALPHA = 0.5;   // Alpha multiplier for bearing numbers
+    const BEARING_TEXT_SCALE = 0.7;   // Scale multiplier relative to base text
+    const BEARING_TEXT_GAP   = 1;     // Gap below ribbon bottom to bearing text (pixels, scaled)
+
     // Total height calculation
     const TOTAL_HEIGHT_PAD   = 25;    // Padding below ribbon for pointer+text area (scaled)
 
@@ -88,6 +93,7 @@ class VUOS_ObjectiveCompass ui
         double compassScale = rs.compassScale;
         bool showDistance = rs.compassShowDistance;
         double compassTextScale = rs.compassTextScale;
+        bool showBearing = rs.compassShowBearing;
 
         // Attempt to load textures if style == 1; fall back to procedural if missing
         bool useTextures = false;
@@ -251,6 +257,44 @@ class VUOS_ObjectiveCompass ui
                 tickSX, int((ribbonY + ribbonHeight) * scaleY) - tickLen,
                 tickSX, int((ribbonY + ribbonHeight) * scaleY),
                 1.0, Color(TICK_MINOR_R, TICK_MINOR_G, TICK_MINOR_B), int(opacity * 120));
+        }
+        
+        // ================================================================
+        // DRAW BEARING NUMBERS (below ribbon, every 30 degrees)
+        // ================================================================
+        // Separate loop so bearings render at all 30° positions including
+        // cardinal/intercardinal degrees (which the minor tick loop skips)
+        if (showBearing)
+        {
+            int scrW = Screen.GetWidth();
+            int scrH = Screen.GetHeight();
+            double bearingScaleVal = scaleY * BEARING_TEXT_SCALE;
+            int bearingPixelY = int((ribbonY + ribbonHeight) * scaleY) + int(BEARING_TEXT_GAP * scaleY);
+
+            for (int deg = 0; deg < 360; deg += 30)
+            {
+                double delta = Actor.DeltaAngle(viewAngle, deg);
+                if (abs(delta) > halfFOV) continue;
+
+                double fraction = (-delta + halfFOV) / compassFOV;
+                int bTickX = int((ribbonX + fraction * ribbonWidth) * scaleX);
+
+                // Convert Doom angle to standard compass bearing (0=N, 90=E, 180=S, 270=W)
+                // Doom angles: 0=East, 90=North, 180=West, 270=South
+                int bearing = (90 - deg + 360) % 360;
+
+                String bearingText = String.Format("%d", bearing);
+                int bearingWidth = fnt.StringWidth(bearingText);
+                int scaledBearingW = int(bearingWidth * bearingScaleVal);
+                int pixelX = bTickX - scaledBearingW / 2;
+
+                Screen.DrawText(fnt, Font.CR_GRAY, pixelX, bearingPixelY, bearingText,
+                    DTA_VirtualWidth, scrW,
+                    DTA_VirtualHeight, scrH,
+                    DTA_ScaleX, bearingScaleVal,
+                    DTA_ScaleY, bearingScaleVal,
+                    DTA_Alpha, opacity * BEARING_TEXT_ALPHA);
+            }
         }
         
         // ================================================================
