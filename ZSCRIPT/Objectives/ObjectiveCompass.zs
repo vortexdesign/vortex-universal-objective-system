@@ -260,9 +260,9 @@ class VUOS_ObjectiveCompass ui
         }
         
         // ================================================================
-        // DRAW BEARING NUMBERS (below ribbon, every 30 degrees)
+        // DRAW BEARING NUMBERS (below ribbon, at configured interval)
         // ================================================================
-        // Separate loop so bearings render at all 30° positions including
+        // Separate loop so bearings render at all interval positions including
         // cardinal/intercardinal degrees (which the minor tick loop skips)
         if (showBearing)
         {
@@ -271,7 +271,7 @@ class VUOS_ObjectiveCompass ui
             double bearingScaleVal = scaleY * BEARING_TEXT_SCALE;
             int bearingPixelY = int((ribbonY + ribbonHeight) * scaleY) + int(BEARING_TEXT_GAP * scaleY);
 
-            for (int deg = 0; deg < 360; deg += 30)
+            for (int deg = 0; deg < 360; deg += rs.compassBearingInterval)
             {
                 double delta = Actor.DeltaAngle(viewAngle, deg);
                 if (abs(delta) > halfFOV) continue;
@@ -313,6 +313,7 @@ class VUOS_ObjectiveCompass ui
         int pointerY = ribbonY + ribbonHeight + int(POINTER_GAP * compassScale) - POINTER_NUDGE_UP;
         int diamondSize = int(DIAMOND_BASE_SIZE * compassScale);
 
+        int multiMode = rs.waypointMultiMode; // 0 = closest, 1 = all
         int skill = G_SkillPropertyInt(SKILLP_ACSReturn);
         for (int i = 0; i < objectives.Size(); i++)
         {
@@ -324,162 +325,191 @@ class VUOS_ObjectiveCompass ui
             if (obj.isCompleted || obj.hasFailed) continue;
             if (!obj.isTracked) continue;
 
-            // Use SphericalCoords: returns (yaw_delta, pitch_delta, distance)
-            vector2 viewAngles = (viewAngle, viewPitch);
-            vector3 spherical = level.SphericalCoords(viewPos, obj.waypointPos, viewAngles);
-            
-            double yawDelta = spherical.X;  // Degrees from player's facing
-            double distance = spherical.Z;  // Distance in map units
-            
-            // Determine if within compass FOV
-            bool clamped = false;
-            double clampedDelta = yawDelta;
-            
-            if (abs(yawDelta) > halfFOV)
-            {
-                clamped = true;
-                clampedDelta = (yawDelta > 0) ? halfFOV - CLAMP_FOV_MARGIN : -halfFOV + CLAMP_FOV_MARGIN;
-            }
-            
-            // Position on ribbon
-            // SphericalCoords .X: positive = target is to the RIGHT, negative = to the LEFT
-            // On ribbon: fraction 0.0 = left edge, 0.5 = center, 1.0 = right edge
-            double fraction = (clampedDelta + halfFOV) / compassFOV;
-            double pointerX = ribbonX + (fraction * ribbonWidth);
-            
-            // Vertical offset based on distance (logarithmic - closer = higher)
-            double logDist = 0;
-            if (distance > 0)
-            {
-                logDist = log(distance * LOG_DIST_SCALE) * LOG_DIST_MULT - LOG_DIST_MULT;
-                if (logDist < 0) logDist = 0;
-                if (logDist > LOG_DIST_MAX) logDist = LOG_DIST_MAX;
-            }
-            double yOff = logDist * compassScale;
-            
             // Choose color based on primary/secondary
             Color diamondColor = obj.isPrimary ? priDiamondColor : secDiamondColor;
             int fontColor = obj.isPrimary ? priColorIdx : secColorIdx;
-            
-            // Dim if clamped to edge
-            double pointerAlpha = clamped ? opacity * 0.5 : opacity;
-            int pointerAlphaInt = int(pointerAlpha * 255);
-            
-            // Convert pointer position to screen coordinates
-            int dCX = int(pointerX * scaleX);
-            int dCY = int((pointerY + yOff) * scaleY);
-            int dR = int(diamondSize * scaleX);
-            int dRY = int(diamondSize * scaleY);
-            
-            // Draw filled diamond
-            if (useTextures && texDiamond.isValid())
+
+            // Build list of position indices to draw diamonds for
+            // Multi-position: show all or just closest based on CVAR
+            int posCount = obj.GetWaypointPositionCount();
+            Array<int> drawIndices;
+            bool useStoredPositions = (posCount > 0);
+            if (posCount > 1 && multiMode == 0)
             {
-                // Textured diamond with color tinting via DTA_FillColor
-                int texW = dR * 2;
-                int texH = dRY * 2;
-                Screen.DrawTexture(texDiamond, false,
-                    dCX - dR, dCY - dRY,
-                    DTA_DestWidthF, double(texW),
-                    DTA_DestHeightF, double(texH),
-                    DTA_Alpha, pointerAlpha,
-                    DTA_FillColor, diamondColor);
+                // Closest mode: find nearest position to player
+                int closest = obj.GetClosestPositionIndex(viewPos);
+                if (closest >= 0) drawIndices.Push(closest);
+            }
+            else if (posCount > 1)
+            {
+                // All mode: draw every position
+                for (int wp = 0; wp < posCount; wp++)
+                    drawIndices.Push(wp);
             }
             else
             {
-                // Procedural diamond using thick lines
-                // Top half
-                Screen.DrawThickLine(dCX - dR, dCY, dCX, dCY - dRY, 1.5, diamondColor, pointerAlphaInt);
-                Screen.DrawThickLine(dCX, dCY - dRY, dCX + dR, dCY, 1.5, diamondColor, pointerAlphaInt);
-                // Bottom half
-                Screen.DrawThickLine(dCX + dR, dCY, dCX, dCY + dRY, 1.5, diamondColor, pointerAlphaInt);
-                Screen.DrawThickLine(dCX, dCY + dRY, dCX - dR, dCY, 1.5, diamondColor, pointerAlphaInt);
-                // Fill center cross
-                Screen.DrawThickLine(dCX - dR + 1, dCY, dCX + dR - 1, dCY, 1.0, diamondColor, pointerAlphaInt);
+                // Single position: use index 0 if available, otherwise fallback to waypointPos
+                drawIndices.Push(0);
             }
-            
-            // Draw edge chevron indicator if clamped (geometric, matching waypoint style)
-            if (clamped)
-            {
-                int chevW = int(CHEVRON_WIDTH * scaleY);
-                int chevH = int(CHEVRON_HEIGHT * scaleY);
-                int chevGap = int(CHEVRON_GAP * scaleX);
-                int chevAlpha = int(pointerAlpha * CHEVRON_ALPHA_MULT * 255);
 
-                if (useTextures && texChevron.isValid())
+            // Draw a diamond for each position
+            for (int dp = 0; dp < drawIndices.Size(); dp++)
+            {
+                vector3 wpPos = useStoredPositions ? obj.GetWaypointPosition(drawIndices[dp]) : obj.waypointPos;
+
+                // Use SphericalCoords: returns (yaw_delta, pitch_delta, distance)
+                vector2 viewAngles = (viewAngle, viewPitch);
+                vector3 spherical = level.SphericalCoords(viewPos, wpPos, viewAngles);
+
+                double yawDelta = spherical.X;  // Degrees from player's facing
+                double distance = spherical.Z;  // Distance in map units
+
+                // Determine if within compass FOV
+                bool clamped = false;
+                double clampedDelta = yawDelta;
+
+                if (abs(yawDelta) > halfFOV)
                 {
-                    // Textured chevron with tinting
-                    int cTexW = int(CHEVRON_TEX_WIDTH * scaleX);
-                    int cTexH = int(CHEVRON_TEX_HEIGHT * scaleY);
-                    if (yawDelta > 0)
-                    {
-                        // Right-pointing (texture is already right-pointing)
-                        int cx = dCX + dR + chevGap;
-                        Screen.DrawTexture(texChevron, false,
-                            cx, dCY - cTexH / 2,
-                            DTA_DestWidthF, double(cTexW),
-                            DTA_DestHeightF, double(cTexH),
-                            DTA_Alpha, pointerAlpha * CHEVRON_ALPHA_MULT,
-                            DTA_FillColor, diamondColor);
-                    }
-                    else
-                    {
-                        // Left-pointing (flip horizontally)
-                        int cx = dCX - dR - chevGap - cTexW;
-                        Screen.DrawTexture(texChevron, false,
-                            cx, dCY - cTexH / 2,
-                            DTA_DestWidthF, double(cTexW),
-                            DTA_DestHeightF, double(cTexH),
-                            DTA_Alpha, pointerAlpha * CHEVRON_ALPHA_MULT,
-                            DTA_FillColor, diamondColor,
-                            DTA_FlipX, true);
-                    }
+                    clamped = true;
+                    clampedDelta = (yawDelta > 0) ? halfFOV - CLAMP_FOV_MARGIN : -halfFOV + CLAMP_FOV_MARGIN;
+                }
+
+                // Position on ribbon
+                // SphericalCoords .X: positive = target is to the RIGHT, negative = to the LEFT
+                // On ribbon: fraction 0.0 = left edge, 0.5 = center, 1.0 = right edge
+                double fraction = (clampedDelta + halfFOV) / compassFOV;
+                double pointerX = ribbonX + (fraction * ribbonWidth);
+
+                // Vertical offset based on distance (logarithmic - closer = higher)
+                double logDist = 0;
+                if (distance > 0)
+                {
+                    logDist = log(distance * LOG_DIST_SCALE) * LOG_DIST_MULT - LOG_DIST_MULT;
+                    if (logDist < 0) logDist = 0;
+                    if (logDist > LOG_DIST_MAX) logDist = LOG_DIST_MAX;
+                }
+                double yOff = logDist * compassScale;
+
+                // Dim if clamped to edge
+                double pointerAlpha = clamped ? opacity * 0.5 : opacity;
+                int pointerAlphaInt = int(pointerAlpha * 255);
+
+                // Convert pointer position to screen coordinates
+                int dCX = int(pointerX * scaleX);
+                int dCY = int((pointerY + yOff) * scaleY);
+                int dR = int(diamondSize * scaleX);
+                int dRY = int(diamondSize * scaleY);
+
+                // Draw filled diamond
+                if (useTextures && texDiamond.isValid())
+                {
+                    // Textured diamond with color tinting via DTA_FillColor
+                    int texW = dR * 2;
+                    int texH = dRY * 2;
+                    Screen.DrawTexture(texDiamond, false,
+                        dCX - dR, dCY - dRY,
+                        DTA_DestWidthF, double(texW),
+                        DTA_DestHeightF, double(texH),
+                        DTA_Alpha, pointerAlpha,
+                        DTA_FillColor, diamondColor);
                 }
                 else
                 {
-                    if (yawDelta > 0)
+                    // Procedural diamond using thick lines
+                    // Top half
+                    Screen.DrawThickLine(dCX - dR, dCY, dCX, dCY - dRY, 1.5, diamondColor, pointerAlphaInt);
+                    Screen.DrawThickLine(dCX, dCY - dRY, dCX + dR, dCY, 1.5, diamondColor, pointerAlphaInt);
+                    // Bottom half
+                    Screen.DrawThickLine(dCX + dR, dCY, dCX, dCY + dRY, 1.5, diamondColor, pointerAlphaInt);
+                    Screen.DrawThickLine(dCX, dCY + dRY, dCX - dR, dCY, 1.5, diamondColor, pointerAlphaInt);
+                    // Fill center cross
+                    Screen.DrawThickLine(dCX - dR + 1, dCY, dCX + dR - 1, dCY, 1.0, diamondColor, pointerAlphaInt);
+                }
+
+                // Draw edge chevron indicator if clamped (geometric, matching waypoint style)
+                if (clamped)
+                {
+                    int chevW = int(CHEVRON_WIDTH * scaleY);
+                    int chevH = int(CHEVRON_HEIGHT * scaleY);
+                    int chevGap = int(CHEVRON_GAP * scaleX);
+                    int chevAlpha = int(pointerAlpha * CHEVRON_ALPHA_MULT * 255);
+
+                    if (useTextures && texChevron.isValid())
                     {
-                        // Right-pointing chevron: >
-                        int cx = dCX + dR + chevGap + chevW;
-                        Screen.DrawThickLine(cx - chevW, dCY - chevH, cx, dCY, 1.5, diamondColor, chevAlpha);
-                        Screen.DrawThickLine(cx, dCY, cx - chevW, dCY + chevH, 1.5, diamondColor, chevAlpha);
+                        // Textured chevron with tinting
+                        int cTexW = int(CHEVRON_TEX_WIDTH * scaleX);
+                        int cTexH = int(CHEVRON_TEX_HEIGHT * scaleY);
+                        if (yawDelta > 0)
+                        {
+                            // Right-pointing (texture is already right-pointing)
+                            int cx = dCX + dR + chevGap;
+                            Screen.DrawTexture(texChevron, false,
+                                cx, dCY - cTexH / 2,
+                                DTA_DestWidthF, double(cTexW),
+                                DTA_DestHeightF, double(cTexH),
+                                DTA_Alpha, pointerAlpha * CHEVRON_ALPHA_MULT,
+                                DTA_FillColor, diamondColor);
+                        }
+                        else
+                        {
+                            // Left-pointing (flip horizontally)
+                            int cx = dCX - dR - chevGap - cTexW;
+                            Screen.DrawTexture(texChevron, false,
+                                cx, dCY - cTexH / 2,
+                                DTA_DestWidthF, double(cTexW),
+                                DTA_DestHeightF, double(cTexH),
+                                DTA_Alpha, pointerAlpha * CHEVRON_ALPHA_MULT,
+                                DTA_FillColor, diamondColor,
+                                DTA_FlipX, true);
+                        }
                     }
                     else
                     {
-                        // Left-pointing chevron: <
-                        int cx = dCX - dR - chevGap - chevW;
-                        Screen.DrawThickLine(cx + chevW, dCY - chevH, cx, dCY, 1.5, diamondColor, chevAlpha);
-                        Screen.DrawThickLine(cx, dCY, cx + chevW, dCY + chevH, 1.5, diamondColor, chevAlpha);
+                        if (yawDelta > 0)
+                        {
+                            // Right-pointing chevron: >
+                            int cx = dCX + dR + chevGap + chevW;
+                            Screen.DrawThickLine(cx - chevW, dCY - chevH, cx, dCY, 1.5, diamondColor, chevAlpha);
+                            Screen.DrawThickLine(cx, dCY, cx - chevW, dCY + chevH, 1.5, diamondColor, chevAlpha);
+                        }
+                        else
+                        {
+                            // Left-pointing chevron: <
+                            int cx = dCX - dR - chevGap - chevW;
+                            Screen.DrawThickLine(cx + chevW, dCY - chevH, cx, dCY, 1.5, diamondColor, chevAlpha);
+                            Screen.DrawThickLine(cx, dCY, cx + chevW, dCY + chevH, 1.5, diamondColor, chevAlpha);
+                        }
                     }
                 }
-            }
-            
-            // Draw distance text below diamond
-            if (showDistance)
-            {
-                String distText;
-                if (distUnits == 0)
-                    distText = String.Format("%d", int(distance));
-                else
-                    distText = String.Format("%dm", int(distance) / 32);
-                
-                int distWidth = fnt.StringWidth(distText);
-                
-                // Draw in pixel space to match diamond position (dCX is pixel-space center)
-                // Use screen dimensions as virtual dims to get 1:1 pixel mapping
-                int scrW = Screen.GetWidth();
-                int scrH = Screen.GetHeight();
-                double textScaleVal = scaleY * compassTextScale; // Use uniform scale to avoid horizontal stretching
-                int scaledDistWidth = int(distWidth * textScaleVal);
-                int distDrawX = dCX - scaledDistWidth / 2;
-                int distDrawY = dCY + dRY + int(DIST_TEXT_GAP * scaleY);
 
-                Screen.DrawText(fnt, fontColor, distDrawX, distDrawY, distText,
-                    DTA_VirtualWidth, scrW,
-                    DTA_VirtualHeight, scrH,
-                    DTA_ScaleX, textScaleVal,
-                    DTA_ScaleY, textScaleVal,
-                    DTA_Alpha, pointerAlpha * DIST_TEXT_ALPHA);
-            }
+                // Draw distance text below diamond
+                if (showDistance)
+                {
+                    String distText;
+                    if (distUnits == 0)
+                        distText = String.Format("%d", int(distance));
+                    else
+                        distText = String.Format("%dm", int(distance) / 32);
+
+                    int distWidth = fnt.StringWidth(distText);
+
+                    // Draw in pixel space to match diamond position (dCX is pixel-space center)
+                    // Use screen dimensions as virtual dims to get 1:1 pixel mapping
+                    int scrW = Screen.GetWidth();
+                    int scrH = Screen.GetHeight();
+                    double textScaleVal = scaleY * compassTextScale; // Use uniform scale to avoid horizontal stretching
+                    int scaledDistWidth = int(distWidth * textScaleVal);
+                    int distDrawX = dCX - scaledDistWidth / 2;
+                    int distDrawY = dCY + dRY + int(DIST_TEXT_GAP * scaleY);
+
+                    Screen.DrawText(fnt, fontColor, distDrawX, distDrawY, distText,
+                        DTA_VirtualWidth, scrW,
+                        DTA_VirtualHeight, scrH,
+                        DTA_ScaleX, textScaleVal,
+                        DTA_ScaleY, textScaleVal,
+                        DTA_Alpha, pointerAlpha * DIST_TEXT_ALPHA);
+                }
+            } // end for each draw position
         }
 
         // Return total height consumed by compass in virtual units

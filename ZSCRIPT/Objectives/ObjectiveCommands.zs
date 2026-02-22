@@ -21,6 +21,7 @@ class VUOS_ObjectiveCommands : EventHandler
             Console.Printf("obj_test          - Add test objectives");
             Console.Printf("obj_complete_test - Complete first active objective");
             Console.Printf("obj_complete_all  - Complete all active objectives");
+            Console.Printf("vuos_auto_list    - Show auto-objective debug info");
             return;
         }
         
@@ -140,6 +141,12 @@ class VUOS_ObjectiveCommands : EventHandler
                 }
             }
             Console.Printf("Completed %d objective(s)", completed);
+            return;
+        }
+
+        if (e.Name ~== "vuos_auto_list")
+        {
+            VUOS_AutoObjectives.DumpAutoList();
             return;
         }
     }

@@ -51,6 +51,23 @@ OptionMenu "UniversalObjectivesMenu"
 {
 	Title "Universal Objectives Settings"
 	
+	// ---- Auto-Generate Objectives ----
+	StaticText "Auto-Generate Objectives (Applied After Closing Menu)", 1
+	Option "Auto Objectives", "vuos_auto_enabled", "OnOff"
+	Option "Keys", "vuos_auto_keys", "ObjAutoCategoryValues"
+	Option "Puzzle Items", "vuos_auto_puzzleitems", "ObjAutoCategoryValues"
+	Option "Bosses", "vuos_auto_bosses", "ObjAutoCategoryValues"
+	Option "Exit", "vuos_auto_exit", "ObjAutoCategoryValues"
+	Option "Secret Exit", "vuos_auto_secretexit", "ObjAutoCategoryValues"
+	Option "Kills", "vuos_auto_kills", "ObjAutoCategoryValues"
+	Option "Kill Count Mode", "vuos_auto_kill_mode", "ObjAutoKillModeValues"
+	Option "Secrets", "vuos_auto_secrets", "ObjAutoCategoryValues"
+	Option "Show Secret Waypoints", "vuos_auto_secret_waypoints", "OnOff"
+	Option "Auto Waypoints", "vuos_auto_waypoints", "OnOff"
+	Option "Load Notification", "vuos_auto_notify", "OnOff"
+
+	StaticText ""
+
 	// ---- HUD Settings ----
 	StaticText "HUD Settings", 1
 	Option "Show HUD Objectives", "obj_hud_show", "OnOff"
@@ -70,6 +87,7 @@ OptionMenu "UniversalObjectivesMenu"
 	Option "Compass Style", "obj_compass_style", "ObjCompassStyleValues"
 	Option "Show Distance on Compass", "obj_compass_show_distance", "OnOff"
 	Option "Show Bearing Numbers", "obj_compass_show_bearing", "OnOff"
+	Option "Bearing Interval", "obj_compass_bearing_interval", "ObjBearingIntervalValues"
 	Slider "Distance Text Scale", "obj_compass_text_scale", 0.5, 3.0, 0.05, 2
 	Slider "Compass Opacity", "obj_compass_opacity", 0.1, 1.0, 0.05, 2
 	Slider "Compass Scale", "obj_compass_scale", 0.5, 2.0, 0.05, 2
@@ -83,6 +101,7 @@ OptionMenu "UniversalObjectivesMenu"
 	StaticText "Waypoint Indicators", 1
 	Option "Waypoint Indicators", "obj_waypoint_mode", "ObjWaypointModeValues"
 	Option "Waypoint Style", "obj_waypoint_style", "ObjWaypointStyleValues"
+	Option "Multi-Waypoint Display", "vuos_waypoint_multi_mode", "ObjMultiWaypointValues"
 	Slider "Indicator Scale", "obj_waypoint_scale", 0.25, 3.0, 0.25, 2
 	Slider "Distance Text Scale", "obj_waypoint_text_scale", 0.5, 3.0, 0.25, 2
 	Slider "Max Display Distance (0=always)", "obj_waypoint_max_distance", 0, 500, 10, 0
@@ -116,6 +135,10 @@ OptionMenu "UniversalObjectivesMenu"
 	StaticText "Automap (Applied After Closing Menu)", 1
 	Option "Show Waypoint Markers", "obj_automap_markers", "OnOff"
 	Option "Marker Style", "obj_automap_marker_style", "ObjAutomapMarkerStyleValues"
+
+	StaticText ""
+
+	Option "Multi-Waypoint Display", "vuos_automap_multi_mode", "ObjMultiWaypointValues"
 
 	StaticText ""
 
@@ -191,4 +214,31 @@ OptionValue "ObjWaypointModeValues"
 	0, "Always On"
 	1, "Always Off"
 	2, "Toggle with Objectives HUD"
+}
+
+OptionValue "ObjMultiWaypointValues"
+{
+	0, "Closest"
+	1, "All"
+}
+
+OptionValue "ObjAutoCategoryValues"
+{
+	0, "Off"
+	1, "Primary"
+	2, "Secondary"
+}
+
+OptionValue "ObjAutoKillModeValues"
+{
+	0, "Fixed"
+	1, "Dynamic"
+}
+
+OptionValue "ObjBearingIntervalValues"
+{
+	15, "15"
+	30, "30"
+	60, "60"
+	90, "90"
 }

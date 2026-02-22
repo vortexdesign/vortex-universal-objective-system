@@ -191,6 +191,49 @@ class VUOS_ObjectiveSetup : VUOS_ObjectiveHandler
 	void SetupMAP01Objectives()
 	{
 		// ====================================================================
+		// PERSISTENCE AND HUB SUPPORT:
+		// ====================================================================
+		// The objective system uses EventHandler, which is per-map in GZDoom.
+		// This means objective state (completed, failed, progress) is scoped
+		// to a single map by default.
+		//
+		// LINEAR PLAY (Doom 2 style: MAP01 -> MAP02 -> MAP03):
+		//   Objectives are created fresh on each map. Previous map objectives
+		//   are not carried forward. This is the expected behavior for linear
+		//   progression since the player never revisits maps.
+		//
+		// HUB PLAY (Hexen style: MAP01 -> MAP02 -> back to MAP01):
+		//   GZDoom automatically preserves per-map state (including objectives)
+		//   when maps are configured as a hub cluster in MAPINFO. When a player
+		//   leaves MAP01 and returns later, all objectives are restored exactly
+		//   as they were (completed status, progress, timers, etc).
+		//
+		//   To enable hub persistence, add a MAPINFO lump with a hub cluster:
+		//
+		//     cluster 1 { hub }
+		//     map MAP01 "Entryway" { cluster 1 }
+		//     map MAP02 "Underhalls" { cluster 1 }
+		//
+		//   The persist flag controls whether an objective survives revisits:
+		//     persist=true  (default) -> kept when returning to the map
+		//     persist=false -> deleted on map exit, fresh on revisit
+		//
+		// GLOBAL JOURNAL (seeing all maps' objectives at once):
+		//   Not currently supported. Each map's objectives are only visible
+		//   while on that map. To implement a global cross-map journal, you
+		//   would need to:
+		//   1. Change VUOS_ObjectiveHandler from EventHandler to StaticEventHandler
+		//      (persists across maps without hub configuration)
+		//   2. Add a serializable storage mechanism (e.g. a Thinker subclass or
+		//      ACS global arrays) to mirror objective completion flags, because
+		//      StaticEventHandler state is NOT serialized in save games
+		//   3. On save load (WorldLoaded with e.IsSaveGame), rebuild objective
+		//      state from the serialized storage
+		//   This is a significant architectural change with save/load complexity.
+		//
+		// ====================================================================
+
+		// ====================================================================
 		// PARAMETER AND METHOD REFERENCE:
 		// ====================================================================
 		// Parameter              Type     Default   Description
@@ -198,7 +241,7 @@ class VUOS_ObjectiveSetup : VUOS_ObjectiveHandler
 		// desc                   String   (none)    Objective description text shown to player
 		// target                 name     ''        Actor class to track (e.g. 'ZombieMan', 'Demon')
 		// count                  int      1         Number of targets needed to complete/fail
-		// objType                int      0         0 = kill (WorldThingDied), 1 = destroy (WorldThingDestroyed)
+		// objType                int      0         0 = kill, 1 = destroy, 2 = collect (inventory), 3 = custom
 		// hidden                 bool     false     If true, objective is not shown on HUD/screen
 		// persist                bool     true      If true, survives map changes; false = deleted on map exit
 		// inverse                bool     false     If true, FAILS when count reached instead of completing
@@ -218,6 +261,12 @@ class VUOS_ObjectiveSetup : VUOS_ObjectiveHandler
 		//
 		// AddSecondaryObjective (convenience - isPrimary is always false):
 		//   AddSecondaryObjective(desc, target, count, objType, hidden, persist, inverse, timeLimit, requiredToComplete, minSkillLevel, maxSkillLevel)
+		//
+		// AddPrimaryCollectObjective (convenience - objType is always 2, isPrimary is always true):
+		//   AddPrimaryCollectObjective(desc, target, count, hidden, persist, requiredToComplete, minSkillLevel, maxSkillLevel)
+		//
+		// AddSecondaryCollectObjective (convenience - objType is always 2, isPrimary is always false):
+		//   AddSecondaryCollectObjective(desc, target, count, hidden, persist, requiredToComplete, minSkillLevel, maxSkillLevel)
 		//
 		// ====================================================================
 		// PRIMARY/SECONDARY OBJECTIVE EXAMPLES:
@@ -294,13 +343,25 @@ class VUOS_ObjectiveSetup : VUOS_ObjectiveHandler
 		//   AddPrimaryObjective("Don't kill the civilians", 'FriendlyNPC', 3, 0, false, true, true);
 		//
 		// ====================================================================
-		// DESTROY TYPE EXAMPLES (objType = 1):
+		// OBJECTIVE TYPE EXAMPLES:
 		// ====================================================================
 		// objType 0 = kill tracking (WorldThingDied) — for monsters/enemies
 		// objType 1 = destroy tracking (WorldThingDestroyed) — for barrels, breakables, etc.
+		// objType 2 = collect tracking (inventory poll) — for keys, puzzle items, pickups
+		// objType 3 = custom (no auto-tracking, use Complete/UpdateProgress/IncrementProgress)
 		//
-		// Destroy 5 explosive barrels:
+		// Destroy 5 explosive barrels (objType=1):
 		//   AddSecondaryObjective("Destroy 5 barrels", 'ExplosiveBarrel', 5, 1);
+		//
+		// Collect a key (auto-completes when player picks it up):
+		//   AddPrimaryCollectObjective("Find the red key", 'RedCard');
+		//   AddSecondaryCollectObjective("Find a health pack", 'Medikit');
+		//
+		// Collect via full AddObjective (objType=2):
+		//   AddPrimaryObjective("Find the red key", 'RedCard', 1, 2);
+		//
+		// Custom objective (objType=3, manually tracked via IncrementProgress):
+		//   AddPrimaryObjective("Activate 3 power switches", '', 3, 3);
 		//
 		// ====================================================================
 		// NON-PERSISTENT OBJECTIVE EXAMPLES (persist = false):
@@ -418,26 +479,29 @@ class VUOS_ObjectiveSetup : VUOS_ObjectiveHandler
 		//   messages, or spawn rewards. Only fires for required objectives.
 		//
 		
-		// PRIMARY OBJECTIVES (required to exit)
-		//VUOS_ObjectiveHandler.AddPrimaryObjective("Kill 5 demons", 'ZombieMan', 5);
-		VUOS_ObjectiveHandler.AddPrimaryObjective("Kill demons in entry way", 'ZombieMan', 2, 0, false, true, false, 0, -1, 0, 4, -69, 1143, 40);
+		// ====================================================================
+		// Manual objectives used for testing taken from the examples above
+		// ====================================================================
+		//// PRIMARY OBJECTIVES (required to exit)
+		////VUOS_ObjectiveHandler.AddPrimaryObjective("Kill 5 demons", 'ZombieMan', 5);
+		//VUOS_ObjectiveHandler.AddPrimaryObjective("Kill demons in entry way", 'ZombieMan', 2, 0, false, true, false, 0, -1, 0, 4, -69, 1143, 40);
 		
-		// Timed objective example - kill 2 zombiemen in 60 seconds (PRIMARY)
-		VUOS_ObjectiveHandler.AddPrimaryObjective("Kill 2 demons in under 30 seconds", 'ZombieMan', 2, 0, false, true, false, 30);
+		//// Timed objective example - kill 2 zombiemen in 60 seconds (PRIMARY)
+		//VUOS_ObjectiveHandler.AddPrimaryObjective("Kill 2 demons in under 60 seconds", 'ZombieMan', 2, 0, false, true, false, 60);
 
-		// Custom objectives (PRIMARY, required to exit)
-		VUOS_ObjectiveHandler.AddPrimaryObjective("Find the red key");
+		//// Custom objectives (PRIMARY, required to exit)
+		//VUOS_ObjectiveHandler.AddPrimaryObjective("Find the red key");
 
-		// SECONDARY OBJECTIVES (optional, not required to exit)
-		// Inverse objective: FAIL when 4 barrels are destroyed (SECONDARY)
-		VUOS_ObjectiveHandler.AddSecondaryObjective("Don't shoot 4 barrels", 'ExplosiveBarrel', 4, 1, false, true, true);
+		//// SECONDARY OBJECTIVES (optional, not required to exit)
+		//// Inverse objective: FAIL when 4 barrels are destroyed (SECONDARY)
+		//VUOS_ObjectiveHandler.AddSecondaryObjective("Don't shoot 4 barrels", 'ExplosiveBarrel', 4, 1, false, true, true);
 
-		// Use Setwaypoint
-		VUOS_ObjectiveHandler.AddSecondaryObjective("Reach the exit");
-		VUOS_ObjectiveHandler.SetWaypoint("Reach the exit", 1007, 1077, 0);
+		//// Use Setwaypoint
+		//VUOS_ObjectiveHandler.AddSecondaryObjective("Reach the exit");
+		//VUOS_ObjectiveHandler.SetWaypoint("Reach the exit", 1007, 1077, 0);
 
-		// NON-PERSISTENT objective example (gets deleted when you leave MAP01) - SECONDARY
-		VUOS_ObjectiveHandler.AddSecondaryObjective("Complete this map without dying", '', 1, 0, false, false);
+		//// NON-PERSISTENT objective example (gets deleted when you leave MAP01) - SECONDARY
+		//VUOS_ObjectiveHandler.AddSecondaryObjective("Complete this map without dying", '', 1, 0, false, false);
 
 	}
 	
@@ -446,19 +510,19 @@ class VUOS_ObjectiveSetup : VUOS_ObjectiveHandler
 	// ========================================================================
 	void SetupMAP02Objectives()
 	{
-		// PRIMARY OBJECTIVES (required to exit)
-		VUOS_ObjectiveHandler.AddPrimaryObjective("Defeat the demons", 'Demon', 8);
+		// // PRIMARY OBJECTIVES (required to exit)
+		// VUOS_ObjectiveHandler.AddPrimaryObjective("Defeat the demons", 'Demon', 8);
 		
-		VUOS_ObjectiveHandler.AddPrimaryObjective("Slay the hell knights", 'HellKnight', 5);
+		// VUOS_ObjectiveHandler.AddPrimaryObjective("Slay the hell knights", 'HellKnight', 5);
 		
-		// Custom objective (triggered by pickups/linedefs/buttons) - PRIMARY
-		VUOS_ObjectiveHandler.AddPrimaryObjective("Activate 3 power switches", '', 3);
+		// // Custom objective (triggered by pickups/linedefs/buttons) - PRIMARY
+		// VUOS_ObjectiveHandler.AddPrimaryObjective("Activate 3 power switches", '', 3);
 		
-		// SECONDARY OBJECTIVES (optional)
-		VUOS_ObjectiveHandler.AddSecondaryObjective("Hunt the chaingunners", 'ChaingunGuy', 3);
+		// // SECONDARY OBJECTIVES (optional)
+		// VUOS_ObjectiveHandler.AddSecondaryObjective("Hunt the chaingunners", 'ChaingunGuy', 3);
 		
-		// Non-persistent example: Find secrets only counts on this map visit - SECONDARY
-		VUOS_ObjectiveHandler.AddSecondaryObjective("Find 2 secret areas", '', 2, 0, false, false);
+		// // Non-persistent example: Find secrets only counts on this map visit - SECONDARY
+		// VUOS_ObjectiveHandler.AddSecondaryObjective("Find 2 secret areas", '', 2, 0, false, false);
 	}
 	
 	// ========================================================================
@@ -502,25 +566,12 @@ class VUOS_ObjectiveSetup : VUOS_ObjectiveHandler
 		// Print all line activations to see what's being triggered
 		if (IsDebugEnabled()) Console.Printf("DEBUG: Line activated - special=%d on %s", special, level.MapName);
 		
-		// In vanilla Doom format:
-		// Type 11 = S1 Door Open Wait Close (regular door, NOT exit)
-		// Type 52 = W1 Exit Level (walk over to exit)
-		// Type 124 = W1 Exit Secret Level (walk over to secret exit)
-		
-		// For MAP01 specifically, the exit is special 12 (not 11!)
-		// Let's check for common exit types: 52, 124, and for MAP01 also check 12
-		bool isExit = false;
-		
-		if (level.MapName ~== "MAP01")
-		{
-			// MAP01 uses special 12 for the exit
-			isExit = (special == 12 || special == 52 || special == 124);
-		}
-		else
-		{
-			// Other maps: standard exit specials
-			isExit = (special == 52 || special == 124);
-		}
+		// GZDoom translates all Doom-format exit specials (52, 124, etc.)
+		// to Hexen-format specials during map loading:
+		//   243 = Exit_Normal
+		//   244 = Exit_Secret
+		// So level.Lines[].special always uses these translated values.
+		bool isExit = (special == 243 || special == 244);
 		
 		if (isExit)
 		{

@@ -131,6 +131,40 @@ user bool obj_compass_show_distance = true;
 user float obj_compass_text_scale = 0.75;
 // Show azimuth bearing numbers (0-360) on compass ribbon at tick positions
 user bool obj_compass_show_bearing = true;
+// Interval in degrees between bearing numbers on compass ribbon (15, 30, 60, or 90)
+user int obj_compass_bearing_interval = 30;
+
+// ============================================================================
+// Multi-Waypoint Display Settings
+// ============================================================================
+// Multi-waypoint display mode for compass and on-screen waypoint indicators
+// 0 = show closest position to player (default), 1 = show all positions
+user int vuos_waypoint_multi_mode = 0;
+// Multi-waypoint display mode for automap markers
+// 0 = show closest position to player (default), 1 = show all positions
+user int vuos_automap_multi_mode = 0;
+
+// ============================================================================
+// Auto-Generate Objectives Settings
+// ============================================================================
+// Master toggle for auto-objective generation (disables all when off, preserves per-category preferences)
+user bool vuos_auto_enabled = true;
+// Per-category settings: 0 = Off, 1 = Primary, 2 = Secondary
+user int vuos_auto_keys = 1;
+user int vuos_auto_puzzleitems = 1;
+user int vuos_auto_bosses = 1;
+user int vuos_auto_exit = 1;
+user int vuos_auto_secretexit = 2;
+user int vuos_auto_kills = 2;
+user int vuos_auto_secrets = 2;
+// Kill count tracking mode: 0 = fixed (stores count at map load), 1 = dynamic (polls every tick)
+user int vuos_auto_kill_mode = 0;
+// Auto-generate waypoint coordinates for objectives where positions are known
+user bool vuos_auto_waypoints = true;
+// Show waypoints for secret sector locations (spoiler - disabled by default)
+user bool vuos_auto_secret_waypoints = false;
+// Show brief HUD notification on map load when auto-objectives are generated
+user bool vuos_auto_notify = true;
 
 // ============================================================================
 // Debug Settings

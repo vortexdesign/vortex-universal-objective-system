@@ -13,3 +13,4 @@ version "4.2.0"
 #include "zscript/objectives/ObjectiveAutomapOverlay.zs"
 #include "zscript/objectives/ObjectiveAutomap.zs"
 #include "zscript/objectives/ObjectiveMinimapBridge.zs" // Optional for use with Cynic Games Minimap mod
+#include "zscript/objectives/VUOS_AutoObjectives.zs"   // Optional auto-objective generator for players who aren't modders

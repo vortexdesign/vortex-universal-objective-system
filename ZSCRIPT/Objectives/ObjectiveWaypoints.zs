@@ -115,6 +115,7 @@ class VUOS_ObjectiveWaypoints ui
         double edgeMargin = EDGE_MARGIN_BASE * wpScale;
         
         // Iterate active waypoint objectives
+        int multiMode = rs.waypointMultiMode; // 0 = closest, 1 = all
         int skill = G_SkillPropertyInt(SKILLP_ACSReturn);
         for (int i = 0; i < objectives.Size(); i++)
         {
@@ -128,14 +129,41 @@ class VUOS_ObjectiveWaypoints ui
 
             // Check max distance cutoff (using cached distance from WorldTick)
             if (maxDistance > 0 && obj.GetDistance(consoleplayer) > maxDistance) continue;
-            
+
+            // Build list of position indices to draw waypoints for
+            int posCount = obj.GetWaypointPositionCount();
+            Array<int> drawIndices;
+            bool useStoredPositions = (posCount > 0);
+            if (posCount > 1 && multiMode == 0)
+            {
+                // Closest mode: find nearest position to player
+                int closest = obj.GetClosestPositionIndex(viewPos);
+                if (closest >= 0) drawIndices.Push(closest);
+            }
+            else if (posCount > 1)
+            {
+                // All mode: draw every position
+                for (int wp = 0; wp < posCount; wp++)
+                    drawIndices.Push(wp);
+            }
+            else
+            {
+                // Single position: use index 0 if available, otherwise fallback to waypointPos
+                drawIndices.Push(0);
+            }
+
+            // Draw a waypoint indicator for each position
+            for (int dp = 0; dp < drawIndices.Size(); dp++)
+            {
+            vector3 wpPos = useStoredPositions ? obj.GetWaypointPosition(drawIndices[dp]) : obj.waypointPos;
+
             // ============================================================
             // WORLD-TO-SCREEN PROJECTION
             // ============================================================
-            
+
             // Step 1: Portal-safe relative vector from camera to waypoint
-            vector3 diff = level.Vec3Diff(viewPos, obj.waypointPos);
-            
+            vector3 diff = level.Vec3Diff(viewPos, wpPos);
+
             // Step 2: Rotate by -viewAngle (yaw) around Z axis
             double rx = diff.x * ca - diff.y * sa;
             double ry = diff.x * sa + diff.y * ca;
@@ -178,9 +206,20 @@ class VUOS_ObjectiveWaypoints ui
             
             // Color: use primary/secondary header colors (same as compass diamonds)
             Color wpColor = VUOS_ObjectiveCompass.GetDiamondColor(obj.isPrimary ? priColorIdx : secColorIdx);
-            
+
             // Distance-based alpha fade
-            int playerDist = obj.GetDistance(consoleplayer);
+            // For multi-position, compute actual distance to this specific position
+            int playerDist;
+            if (drawIndices.Size() > 1)
+            {
+                vector3 pPos = players[consoleplayer].mo.pos;
+                pPos.z = players[consoleplayer].viewz;
+                playerDist = int(level.Vec3Diff(pPos, wpPos).Length());
+            }
+            else
+            {
+                playerDist = obj.GetDistance(consoleplayer);
+            }
             double distFade = 1.0;
             if (playerDist > FADE_DIST_START)
             {
@@ -279,6 +318,7 @@ class VUOS_ObjectiveWaypoints ui
                 DrawDistanceText(clampX + nudge, clampY - arrowSize * DIST_TEXT_Y_MULT,
                     playerDist, distUnits, fontColor, alpha * EDGE_ALPHA_MULT, textScale);
             }
+            } // end for each draw position
         }
     }
     

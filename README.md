@@ -1,4 +1,4 @@
-# Vortex's Universal Objective System (VUOS) v0.2.0
+# Vortex's Universal Objective System (VUOS) v0.3.0
 
 A universal objective and waypoint system for GZDoom/UZDoom mods.
 Inspired by Blade of Agony, Hellscape Navigator, and Cynic Games Minimap.
@@ -12,18 +12,25 @@ Inspired by Blade of Agony, Hellscape Navigator, and Cynic Games Minimap.
 - MIT (see LICENSE file)
 - Credit appreciated (see CREDITS.txt)
 
-## Getting Started
+## Getting Started (Players)
+
+1. Load the VUOS PK3 file alongside any GZDoom/UZDoom mod
+2. Auto-generated objectives will appear for keys, bosses, exits, kills, and secrets
+3. Customize what gets generated in **Options > Universal Objectives > Auto Objectives**
+
+## Getting Started (Modders)
 
 1. Add VUOS to your project's load order
-2. Customize your objectives in `ObjectiveSetup.zs` (subclass of `VUOS_ObjectiveHandler`)
-3. Configure settings in-game via **Options > Universal Objectives**
+2. Define custom objectives in `ObjectiveSetup.zs` (subclass of `VUOS_ObjectiveHandler`)
+3. Use `VUOS_AutoObjectives.SuppressMap("MAP01")` on maps where you define your own objectives
+4. Configure settings in-game via **Options > Universal Objectives**
 
 ## Features
 
 ### Objective Types
 - **TYPE_KILL (0)** — Auto-tracked via `WorldThingDied`
 - **TYPE_DESTROY (1)** — Auto-tracked via `WorldThingDestroyed`
-- **TYPE_COLLECT (2)** — Manual tracking required
+- **TYPE_COLLECT (2)** — Auto-tracked via inventory polling
 - **TYPE_CUSTOM (3)** — Manual tracking required
 
 ### Primary & Secondary Objectives
@@ -152,6 +159,8 @@ static void AddObjective(
 // Convenience methods
 static void AddPrimaryObjective(...)    // isPrimary = true
 static void AddSecondaryObjective(...)  // isPrimary = false
+static void AddPrimaryCollectObjective(desc, target, count, hidden, persist, requiredToComplete, minSkillLevel, maxSkillLevel, wpX, wpY, wpZ)    // objType=2, isPrimary=true
+static void AddSecondaryCollectObjective(desc, target, count, hidden, persist, requiredToComplete, minSkillLevel, maxSkillLevel, wpX, wpY, wpZ)  // objType=2, isPrimary=false
 ```
 
 ### Progress & Completion
@@ -232,6 +241,11 @@ VUOS_ObjectiveHandler (Abstract EventHandler)
 
 VUOS_ObjectiveSetup (extends VUOS_ObjectiveHandler)
   - Your mod's objective definitions per map
+
+VUOS_AutoObjectives (EventHandler)
+  - Scans maps at load for keys, bosses, exits, kills, secrets
+  - Per-category CVar toggles with primary/secondary priority
+  - Auto-waypoints, per-map suppression, mid-map regeneration
 
 VUOS_ObjectiveRenderer (EventHandler)
   - HUD mode, journal screen, notifications
@@ -348,7 +362,20 @@ class ExitTrigger : Actor
 
 ## Changelog
 
-### v0.2.0 (February 2026)
+### v0.3.0 (February 2026)
+
+**Auto-Generate Objectives**
+- Automatic objective generation for keys, puzzle items, bosses, exits, secret exits, kills, and secrets
+- Per-category toggle with Primary/Secondary/Off priority selection
+- Auto-waypoints for keys, puzzle items, bosses, and exit linedefs
+- Optional secret sector waypoints (disabled by default to avoid spoilers)
+- Kill tracking with fixed or dynamic count modes
+- Singular/plural secret descriptions ("Find the secret" vs "Find all secrets")
+- CVar change detection with mid-map regeneration (preserves current progress)
+- Per-map suppression API (`SuppressMap`) for maps with custom objectives
+- Settings applied after closing menu (uses deferred CVar caching to avoid false triggers)
+
+### v0.2.0 (January 2026)
 
 **Architecture Overhaul**
 - Complete rewrite from Thinker-based to EventHandler-based objective storage
@@ -373,15 +400,17 @@ class ExitTrigger : Actor
 - Objective tracking toggle (per-objective, controlled via journal cursor)
 - `SetHidden`, `ResetObjective`, `RemoveObjective` methods
 - `AddPrimaryObjective` / `AddSecondaryObjective` convenience methods
+- `AddPrimaryCollectObjective` / `AddSecondaryCollectObjective` convenience methods for inventory-polled collect objectives
 - Expanded query API: `Exists`, `IsComplete`, `IsActive`, `HasFailed`, `GetProgress`, `GetMaxProgress`
 
 **Navigation & Spatial Features**
 - Waypoint system — objectives can have 3D world positions (`SetWaypoint` / `ClearWaypoint`)
 - Compass ribbon — horizontal bar with cardinal directions and waypoint diamonds
 - On-screen 3D waypoint indicators with world-to-screen projection and off-screen arrows
-- Automap markers (X or numbered 1–9) for waypoint objectives
+- Automap markers (X or numbered 1-9) for waypoint objectives
 - Automap legend overlay showing active objectives
 - Distance display on HUD, compass, and waypoint indicators (map units or meters)
+- Configurable compass bearing interval (15, 30, 60, or 90 degrees)
 
 **UI & Customization**
 - Full options menu (`MENUDEF`) under Options > Universal Objectives

@@ -55,8 +55,8 @@ class VUOS_ObjectiveRenderer : EventHandler
     const JOURNAL_BG_SIZE    = 300;   // Background target size (square)
     const JOURNAL_TEXT_X     = 47;    // Text X offset from background left edge
     const JOURNAL_TEXT_Y     = 85;    // Text Y offset from background top edge
-    const JOURNAL_DESC_WIDTH = 175;   // Max description column width
-    const JOURNAL_COUNTER_X  = 218;   // Counter column X offset from background
+    const JOURNAL_DESC_WIDTH = 155;   // Max description column width
+    const JOURNAL_COUNTER_X  = 200;   // Counter column X offset from background
     const JOURNAL_HINT_BOTTOM = 20;   // Hint line distance from background bottom
     const JOURNAL_CONTENT_BOTTOM = 35; // Content area bottom margin (hint + border)
     const JOURNAL_SECTION_GAP = 8;    // Gap between primary and secondary sections
