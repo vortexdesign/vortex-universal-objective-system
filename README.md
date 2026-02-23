@@ -420,7 +420,7 @@ class ExitTrigger : Actor
 - Full options menu (`MENUDEF`) under Options > Universal Objectives
 - Journal screen with cursor navigation (Up/Down) and tracking toggle (Enter/Use)
 - HUD position cycling across 4 corners with fine-tune X/Y offsets
-- 44 CVars for colors, positions, scales, opacity, styles, and behavior
+- 60 CVars for colors, positions, scales, opacity, styles, and behavior
 - Configurable notification duration and center/console display options
 - Procedural or textured rendering styles for compass and waypoint indicators
 - Customizable colors for headers, objective states, notifications, and distance text
