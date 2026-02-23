@@ -375,6 +375,10 @@ class ExitTrigger : Actor
 - Per-map suppression API (`SuppressMap`) for maps with custom objectives
 - Settings applied after closing menu (uses deferred CVar caching to avoid false triggers)
 
+**Multi-Waypoint Display**
+- Configurable display mode for waypoint indicators, compass, and automap: show closest only or show all tracked waypoints
+- Separate CVars for on-screen/compass (`vuos_waypoint_multi_mode`) and automap (`vuos_automap_multi_mode`)
+
 ### v0.2.0 (January 2026)
 
 **Architecture Overhaul**
