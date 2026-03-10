@@ -1,6 +1,15 @@
 Vortex's Universal Objective System
 Copyright (c) 2026 Vortex
 
+Blade of Agony
+https://boa.realm667.com/
+
+Hellscape Navigator
+https://github.com/mmaulwurff/hellscape-navigator
+
+Cynic Games Minimap
+https://www.moddb.com/mods/minimap-v10
+
 License:
 - Code is licensed under the MIT License (see LICENSE file).
 
