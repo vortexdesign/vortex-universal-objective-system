@@ -10,10 +10,9 @@ class VUOS_ObjectiveHandler : EventHandler abstract
     // doesn't depend on any specific player's pawn.
     //
     // PERSISTENCE: EventHandler is per-map. For cross-map persistence
-    // (e.g. revisiting maps in hub-based mods), configure your maps as a
-    // hub cluster in MAPINFO. GZDoom automatically preserves per-map
-    // EventHandler state within a hub. For linear (non-hub) progression,
-    // objectives are scoped to the current map which is the expected behavior.
+    // (e.g. revisiting maps in hub-based mods), configure your maps as a hub cluster in MAPINFO. 
+    // GZ/UZDoom automatically preserves per-map EventHandler state within a hub. 
+    // For linear (non-hub) progression objectives are scoped to the current map which is the expected behavior.
     // See ObjectiveSetup.zs for full persistence documentation.
     // ====================================================================
     Array<VUOS_ObjectiveData> objectives;
@@ -94,9 +93,15 @@ class VUOS_ObjectiveHandler : EventHandler abstract
         return null;
     }
 
-    // Centralized handler lookups — consolidates EventHandler.Find() to one location
+    // Centralized handler lookups — consolidates EventHandler.Find() to one location.
+    // Prefers the "active setup" registered by the most recently loaded Setup subclass
+    // on VUOS_ObjectiveRenderer (see the registration in VUOS_ObjectiveHandler.WorldLoaded),
+    // so modder subclasses of VUOS_ObjectiveSetup receive callbacks. 
+    // Falls back to EventHandler.Find by exact class name when nothing has registered yet (e.g. during very early event dispatch before the first WorldLoaded).
     static VUOS_ObjectiveHandler GetSetupHandler()
     {
+        let renderer = VUOS_ObjectiveRenderer(EventHandler.Find('VUOS_ObjectiveRenderer'));
+        if (renderer && renderer.activeSetup) return renderer.activeSetup;
         return VUOS_ObjectiveHandler(EventHandler.Find('VUOS_ObjectiveSetup'));
     }
 
@@ -478,9 +483,8 @@ class VUOS_ObjectiveHandler : EventHandler abstract
     // ====================================================================
 
     // Flag that markers need rebuilding on the next periodic refresh cycle.
-    // Use this instead of calling RefreshAllMarkers() directly for deferred updates
-    // (objective state changes, waypoint changes). CVar-triggered refreshes
-    // call RefreshAllMarkers() directly for immediate visual feedback.
+    // Use this instead of calling RefreshAllMarkers() directly for deferred updates (objective state changes, waypoint changes). 
+    // CVar-triggered refreshes call RefreshAllMarkers() directly for immediate visual feedback.
     static void MarkMarkersDirty()
     {
         let handler = GetSetupHandler();
@@ -644,11 +648,8 @@ class VUOS_ObjectiveHandler : EventHandler abstract
     }
 
     // Refresh all automap markers with correct numbering.
-    // Called from WorldTick when the markersDirty flag is set, and directly
-    // on CVar changes for immediate visual feedback. Clears the dirty flag
-    // on completion.
-    // Uses the same ordering as the legend: primary first, then secondary,
-    // filtered to active (not completed, not failed) objectives with waypoints.
+    // Called from WorldTick when the markersDirty flag is set, and directly on CVar changes for immediate visual feedback. Clears the dirty flag on completion.
+    // Uses the same ordering as the legend: primary first, then secondary filtered to active (not completed, not failed) objectives with waypoints.
     // Completed/failed objectives get yellow/red X markers when CVar is enabled.
     static void RefreshAllMarkers()
     {
@@ -985,11 +986,17 @@ class VUOS_ObjectiveHandler : EventHandler abstract
 
     // Clean up non-persistent objectives when changing maps
     // Lives in the handler (not renderer) because it mutates objective data.
-    // VUOS_ObjectiveSetup.WorldLoaded calls Super.WorldLoaded(e) so this runs
-    // before new objectives are created, guaranteeing correct ordering.
+    // VUOS_ObjectiveSetup.WorldLoaded calls Super.WorldLoaded(e) so this runs before new objectives are created, guaranteeing correct ordering.
     override void WorldLoaded(WorldEvent e)
     {
         if (IsDebugEnabled()) Console.Printf("DEBUG: WorldLoaded fired in VUOS_ObjectiveHandler");
+
+        // Register this instance as the active setup so modder subclasses can receive virtual callbacks (OnObjectiveComplete, OnObjectiveFail, etc.). 
+        // Without this GetSetupHandler() would only find the base VUOS_ObjectiveSetup via exact-name lookup and a modder subclass's overrides would silently never fire. 
+        // Subclasses inherit this registration automatically through Super.WorldLoaded(e). 
+        // Later-running handlers overwrite earlier ones, so modders who want their subclass to win should SetOrder higher than the default 0.
+        let renderer = VUOS_ObjectiveRenderer(EventHandler.Find('VUOS_ObjectiveRenderer'));
+        if (renderer) renderer.activeSetup = self;
 
         String currentMap = level.MapName;
         if (IsDebugEnabled()) Console.Printf("DEBUG: previousMapName='%s', currentMap='%s'", previousMapName, currentMap);
@@ -1093,8 +1100,7 @@ class VUOS_ObjectiveHandler : EventHandler abstract
         }
 
         // ---- TYPE_COLLECT: inventory polling for collect objectives ----
-        // Items like keys and puzzle items go into player inventory on pickup
-        // rather than being destroyed, so WorldThingDestroyed doesn't fire.
+        // Items like keys and puzzle items go into player inventory on pickup rather than being destroyed, so WorldThingDestroyed doesn't fire.
         // Poll player inventory for TYPE_COLLECT (2) objectives with a targetClass.
         for (int i = 0; i < objectives.Size(); i++)
         {
@@ -1118,8 +1124,7 @@ class VUOS_ObjectiveHandler : EventHandler abstract
         }
 
         // ---- Automap marker CVar change detection (every tic) ----
-        // Check if marker-related CVars changed so markers update instantly
-        // when the player closes the options menu (WorldTick is paused during menu,
+        // Check if marker-related CVars changed so markers update instantly when the player closes the options menu (WorldTick is paused during menu,
         // so this fires on the first tic after menu close).
         PlayerInfo fp = GetFirstPlayer();
         if (fp)
@@ -1155,6 +1160,25 @@ class VUOS_ObjectiveHandler : EventHandler abstract
         }
     }
 
+    // Replacement-aware class matching. Returns true if `thing` satisfies a "kill/destroy
+    // targetClass" objective via any of three paths:
+    //   1. Direct class-name match (cheapest, covers the common case)
+    //   2. Replacement chain via Actor.GetReplacee (e.g. mod class CyberImp replaces DoomImp)
+    //   3. Inheritance via `is` (e.g. mod class SuperImp extends DoomImp without `replaces`)
+    // Without this, enemy mods that replace or subclass vanilla monsters would silently
+    // fail to increment objectives that target the vanilla class by name.
+    private bool MatchesTargetClass(Actor thing, Name targetClass, Name cachedClassName)
+    {
+        if (cachedClassName == targetClass) return true;
+
+        class<Actor> replaceeClass = Actor.GetReplacee(thing.GetClass());
+        if (replaceeClass && replaceeClass.GetClassName() == targetClass) return true;
+
+        if (thing is targetClass) return true;
+
+        return false;
+    }
+
     // Handle enemy deaths
     override void WorldThingDied(WorldEvent e)
     {
@@ -1162,6 +1186,7 @@ class VUOS_ObjectiveHandler : EventHandler abstract
 
         // Check all kill objectives FOR CURRENT MAP ONLY
         int skill = G_SkillPropertyInt(SKILLP_ACSReturn);
+        Name victimClass = e.Thing.GetClassName();
         for (int i = 0; i < objectives.Size(); i++)
         {
             let obj = objectives[i];
@@ -1172,8 +1197,8 @@ class VUOS_ObjectiveHandler : EventHandler abstract
 
             if (obj.objectiveType == 0 && !obj.isCompleted && !obj.hasFailed)
             {
-                // Check if this matches the target class
-                if (e.Thing.GetClassName() == obj.targetClass)
+                // Replacement-aware match so enemy-mod replacers/subclasses also count
+                if (MatchesTargetClass(e.Thing, obj.targetClass, victimClass))
                 {
                     if (IsDebugEnabled()) Console.Printf("DEBUG [VUOS_ObjectiveHandler]: Processing kill objective '%s' - count=%d/%d, failed=%d",
                         obj.objectiveDescription, obj.currentCount, obj.targetCount, obj.hasFailed);
@@ -1209,6 +1234,7 @@ class VUOS_ObjectiveHandler : EventHandler abstract
 
         // Check all destroy/find objectives FOR CURRENT MAP ONLY
         int skill = G_SkillPropertyInt(SKILLP_ACSReturn);
+        Name victimClass = e.Thing.GetClassName();
         for (int i = 0; i < objectives.Size(); i++)
         {
             let obj = objectives[i];
@@ -1219,7 +1245,8 @@ class VUOS_ObjectiveHandler : EventHandler abstract
 
             if (obj.objectiveType == 1 && !obj.isCompleted && !obj.hasFailed)
             {
-                if (e.Thing.GetClassName() == obj.targetClass)
+                // Replacement-aware match so enemy-mod replacers/subclasses also count
+                if (MatchesTargetClass(e.Thing, obj.targetClass, victimClass))
                 {
                     if (IsDebugEnabled()) Console.Printf("DEBUG [VUOS_ObjectiveHandler]: Processing destroy objective '%s' - count=%d/%d, failed=%d",
                         obj.objectiveDescription, obj.currentCount, obj.targetCount, obj.hasFailed);

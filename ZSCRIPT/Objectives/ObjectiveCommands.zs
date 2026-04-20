@@ -15,13 +15,15 @@ class VUOS_ObjectiveCommands : EventHandler
         
         if (e.Name ~== "obj_help")
         {
-            Console.Printf("=== Universal Objective Commands ===");
+            Console.Printf("\c[Gold]=== VUOS Objective Commands ===\c-");
             Console.Printf("obj_list          - Show all objectives");
+            Console.Printf("obj_help          - Show this help text");
             Console.Printf("obj_clear         - Clear all objectives");
             Console.Printf("obj_test          - Add test objectives");
             Console.Printf("obj_complete_test - Complete first active objective");
             Console.Printf("obj_complete_all  - Complete all active objectives");
             Console.Printf("vuos_auto_list    - Show auto-objective debug info");
+            Console.Printf("vuos_random_reset - Reset all vuos_random_* CVars to defaults (KEYCONF alias)");
             return;
         }
         
@@ -30,12 +32,23 @@ class VUOS_ObjectiveCommands : EventHandler
             let handler = VUOS_ObjectiveHandler.GetSetupHandler();
             if (!handler || handler.objectives.Size() == 0)
             {
-                Console.Printf("No active objectives");
+                Console.Printf("VUOS: No active objectives");
                 return;
             }
 
             int currentSkill = G_SkillPropertyInt(SKILLP_ACSReturn);
-            Console.Printf("=== Active Objectives (%d) === [Current Skill: %d]", handler.objectives.Size(), currentSkill);
+            int totalCount = handler.objectives.Size();
+            int completedCount = 0;
+            for (int u = 0; u < totalCount; u++)
+            {
+                if (handler.objectives[u].isCompleted)
+                    completedCount++;
+            }
+
+            Console.Printf("\c[Gold]--- VUOS Objective List ---\c-");
+            Console.Printf("Total: %d | Completed: %d [Skill: %d]", totalCount, completedCount, currentSkill);
+            Console.Printf("");
+
             for (int i = 0; i < handler.objectives.Size(); i++)
             {
                 let obj = handler.objectives[i];
@@ -149,5 +162,9 @@ class VUOS_ObjectiveCommands : EventHandler
             VUOS_AutoObjectives.DumpAutoList();
             return;
         }
+
+        // vuos_random_reset is handled directly in KEYCONF.txt via chained `set`
+        // commands instead of going through netevent here. CVar.SetInt() in this
+        // context does not reliably persist user-scope CVars across restarts.
     }
 }

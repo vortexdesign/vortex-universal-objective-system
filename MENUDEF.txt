@@ -68,6 +68,31 @@ OptionMenu "UniversalObjectivesMenu"
 
 	StaticText ""
 
+	// ---- Random Objectives Layer (0.4.0) ----
+	StaticText "Random Objectives Layer (Applied On Map Load or Live)", 1
+	Option "Random Layer", "vuos_random_enabled", "OnOff"
+	Slider "Seed Salt (change to reroll)", "vuos_random_seed_salt", -100, 100, 1, 0
+	Slider "Minimum Floor (objectives)", "vuos_random_min_floor", 0, 5, 1, 0
+	Option "Skill Weighting", "vuos_random_skill_weighting", "OnOff"
+	StaticText "  Per-Category Spawn Chance (%)", 0
+	Slider "  Keys", "vuos_random_chance_keys", 0, 100, 5, 0
+	Slider "  Puzzle Items", "vuos_random_chance_puzzleitems", 0, 100, 5, 0
+	Slider "  Bosses", "vuos_random_chance_bosses", 0, 100, 5, 0
+	Slider "  Exit", "vuos_random_chance_exit", 0, 100, 5, 0
+	Slider "  Secret Exit", "vuos_random_chance_secretexit", 0, 100, 5, 0
+	Slider "  Kills", "vuos_random_chance_kills", 0, 100, 5, 0
+	Slider "  Secrets", "vuos_random_chance_secrets", 0, 100, 5, 0
+	StaticText "  Subset Sampling (0 = use all candidates)", 0
+	Slider "  Random Keys (N of pool)", "vuos_random_sample_keys", 0, 10, 1, 0
+	Slider "  Random Puzzle Items", "vuos_random_sample_puzzleitems", 0, 10, 1, 0
+	Slider "  Random Bosses", "vuos_random_sample_bosses", 0, 10, 1, 0
+	StaticText "  Elite/Bounty Tier", 0
+	Slider "  Elite Chance (%)", "vuos_random_elite_chance", 0, 100, 5, 0
+	Option "  Elite Priority", "vuos_random_elite_priority", "ObjAutoCategoryValues"
+	SafeCommand "Reset Random Settings to Defaults", "vuos_random_reset"
+
+	StaticText ""
+
 	// ---- HUD Settings ----
 	StaticText "HUD Settings", 1
 	Option "Show HUD Objectives", "obj_hud_show", "OnOff"
@@ -101,6 +126,7 @@ OptionMenu "UniversalObjectivesMenu"
 	StaticText "Waypoint Indicators", 1
 	Option "Waypoint Indicators", "obj_waypoint_mode", "ObjWaypointModeValues"
 	Option "Waypoint Style", "obj_waypoint_style", "ObjWaypointStyleValues"
+	Option "Vertical Mode", "obj_waypoint_vertical_mode", "ObjWaypointVerticalModeValues"
 	Option "Multi-Waypoint Display", "vuos_waypoint_multi_mode", "ObjMultiWaypointValues"
 	Slider "Indicator Scale", "obj_waypoint_scale", 0.25, 3.0, 0.25, 2
 	Slider "Distance Text Scale", "obj_waypoint_text_scale", 0.5, 3.0, 0.25, 2
@@ -214,6 +240,12 @@ OptionValue "ObjWaypointModeValues"
 	0, "Always On"
 	1, "Always Off"
 	2, "Toggle with Objectives HUD"
+}
+
+OptionValue "ObjWaypointVerticalModeValues"
+{
+	0, "Centered"
+	1, "Fixed"
 }
 
 OptionValue "ObjMultiWaypointValues"

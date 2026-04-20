@@ -4,6 +4,7 @@
 gameinfo
 {
 	AddEventHandlers = "VUOS_ObjectiveSetup"
+	AddEventHandlers = "VUOS_RandomObjectives"
 	AddEventHandlers = "VUOS_AutoObjectives"
 	AddEventHandlers = "VUOS_ObjectiveRenderer"
 	AddEventHandlers = "VUOS_ObjectiveCommands"

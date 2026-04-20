@@ -483,7 +483,7 @@ class VUOS_ObjectiveSetup : VUOS_ObjectiveHandler
 		// Manual objectives used for testing taken from the examples above
 		// ====================================================================
 		//// PRIMARY OBJECTIVES (required to exit)
-		////VUOS_ObjectiveHandler.AddPrimaryObjective("Kill 5 demons", 'ZombieMan', 5);
+		//VUOS_ObjectiveHandler.AddPrimaryObjective("Kill 5 demons", 'ZombieMan', 5);
 		//VUOS_ObjectiveHandler.AddPrimaryObjective("Kill demons in entry way", 'ZombieMan', 2, 0, false, true, false, 0, -1, 0, 4, -69, 1143, 40);
 		
 		//// Timed objective example - kill 2 zombiemen in 60 seconds (PRIMARY)

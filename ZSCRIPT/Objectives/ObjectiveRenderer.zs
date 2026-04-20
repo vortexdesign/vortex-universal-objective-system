@@ -35,6 +35,15 @@ class VUOS_ObjectiveRenderer : EventHandler
     // Cached for performance — avoids EventHandler.Find() lookup every frame
     VUOS_ObjectiveHandler cachedSetupHandler;
 
+    // Canonical "active setup" reference — points to whichever VUOS_ObjectiveSetup
+    // subclass is currently registered (set from VUOS_ObjectiveHandler.WorldLoaded).
+    // EventHandler.Find('VUOS_ObjectiveSetup') does exact-name match and misses modder
+    // subclasses, so GetSetupHandler() prefers this field and falls back to Find only
+    // if nothing has registered yet. Later-running subclasses overwrite earlier ones,
+    // so modders who want their subclass to win should SetOrder higher than the
+    // default 0 used by the base VUOS_ObjectiveSetup.
+    VUOS_ObjectiveHandler activeSetup;
+
     // Cached render settings — allocated once in OnRegister, refreshed every frame
     // Avoids per-frame GC allocation from creating a new object each RenderOverlay call
     VUOS_RenderSettings cachedRenderSettings;

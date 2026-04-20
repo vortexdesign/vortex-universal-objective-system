@@ -1,7 +1,7 @@
 // ObjectiveWaypoints.zs
 // On-screen 3D waypoint indicators for objectives with spatial locations
 // Uses self-contained world-to-screen projection (no external library dependency)
-// Math derived from GZDoom's internal poly renderer FOV calculations
+// Math derived from GZ/UZDoom's internal poly renderer FOV calculations
 
 class VUOS_ObjectiveWaypoints ui
 {
@@ -45,9 +45,6 @@ class VUOS_ObjectiveWaypoints ui
     const DIST_TEXT_NUDGE    = 120.0; // Horizontal nudge for off-screen distance text
     const DIST_TEXT_Y_MULT   = 1.5;   // Vertical offset multiplier for off-screen text
     const TEXT_SCALE_REF     = 640.0; // Reference width for text scale calculation
-
-    // Vertical drift
-    const VERTICAL_DRIFT_MAX = 0.10;  // Max vertical drift as fraction of screen height
 
     // ====================================================================
     // PUBLIC ENTRY POINT - Called from VUOS_ObjectiveRenderer.RenderOverlay()
@@ -96,7 +93,7 @@ class VUOS_ObjectiveWaypoints ui
         double baseFOV = players[consoleplayer].FOV;
         double aspect = screenW / screenH;
         
-        // GZDoom FOV: baseFOV is horizontal FOV at 4:3 aspect ratio
+        // GZ/UZDoom FOV: baseFOV is horizontal FOV at 4:3 aspect ratio
         // For widescreen, vertical FOV stays constant, horizontal widens
         // fovratio = max(aspect, 4/3) clamped to 4/3 for standard+ displays
         double fovratio = (aspect >= 1.3) ? ASPECT_4_3 : aspect;
@@ -170,7 +167,7 @@ class VUOS_ObjectiveWaypoints ui
             double rz = diff.z;
             
             // Step 3: Rotate by viewPitch around Y axis
-            // (GZDoom: positive pitch = looking up)
+            // (GZ/UZDoom: negative pitch = looking up, positive = looking down)
             double depth = rx * cp + rz * sp;
             double vy = ry;
             double vz = -rx * sp + rz * cp;
@@ -190,18 +187,27 @@ class VUOS_ObjectiveWaypoints ui
             if (!isBehind)
             {
                 // Perspective divide to NDC [-1, 1]
+                // ndcY is negated: GZ/UZDoom pitch convention is negative=looking up,
+                // so positive finalZ (target above aim) must map to a negative NDC
+                // to produce a lower screenY (screen origin is top-left).
                 double ndcX = -finalY / (depth * tanHalfFovX);
-                double ndcY = finalZ / (depth * tanHalfFovY);
-                
+                double ndcY = -finalZ / (depth * tanHalfFovY);
+
                 // Map NDC to screen pixels
                 // Horizontal: full projection tracking
                 screenX = (1.0 + ndcX) * 0.5 * screenW;
-                // Vertical: center of screen with gentle drift from pitch
-                double verticalDrift = ndcY * VERTICAL_DRIFT_MAX;
-                screenY = (1.0 - verticalDrift) * 0.5 * screenH;
-                
-                // Consider "on screen" if the objective is within the camera's horizontal view
+                // Vertical: two modes controlled by obj_waypoint_vertical_mode
+                //   0 = centered (pinned to horizontal midline, pitch ignored)
+                //   1 = fixed    (full 3D projection, waypoint stays pinned to its world position)
+                double verticalFactor = (rs.waypointVerticalMode == 1) ? 1.0 : 0.0;
+                double verticalOffset = ndcY * verticalFactor;
+                screenY = (1.0 - verticalOffset) * 0.5 * screenH;
+
+                // On-screen test: horizontal always, vertical only when full projection is in use
+                // (centered keeps screenY at the middle, so no vertical cull needed)
                 isOnScreen = (screenX >= edgeMargin && screenX <= screenW - edgeMargin);
+                if (rs.waypointVerticalMode == 1)
+                    isOnScreen = isOnScreen && (screenY >= edgeMargin && screenY <= screenH - edgeMargin);
             }
             
             // Color: use primary/secondary header colors (same as compass diamonds)
@@ -273,8 +279,9 @@ class VUOS_ObjectiveWaypoints ui
                 else
                 {
                     // In front but off screen: clamp to nearest edge
+                    // ndcY negated to match GZ/UZDoom pitch convention (see on-screen path)
                     double ndcX = -finalY / (depth * tanHalfFovX);
-                    double ndcY = finalZ / (depth * tanHalfFovY);
+                    double ndcY = -finalZ / (depth * tanHalfFovY);
                     
                     // Calculate arrow angle pointing toward the objective
                     arrowAngle = atan2(ndcY, ndcX);

@@ -239,6 +239,7 @@ class VUOS_RenderSettings
     int waypointMaxDistance;
     double waypointTextScale;
     int waypointStyle;       // 0 = procedural, 1 = textured
+    int waypointVerticalMode;// 0 = centered (pitch ignored), 1 = fixed (full 3D pitch projection, pinned to world position)
     int waypointMultiMode;   // 0 = show closest, 1 = show all (for compass + waypoints)
     int automapMultiMode;    // 0 = show closest, 1 = show all (for automap markers)
 
@@ -286,6 +287,8 @@ class VUOS_RenderSettings
         if (waypointTextScale < 0.5) waypointTextScale = 0.5;
         if (waypointTextScale > 3.0) waypointTextScale = 3.0;
         waypointStyle = VUOS_ObjectiveHandler.GetCVarInt('obj_waypoint_style', p, 0);
+        waypointVerticalMode = VUOS_ObjectiveHandler.GetCVarInt('obj_waypoint_vertical_mode', p, 1);
+        if (waypointVerticalMode < 0 || waypointVerticalMode > 1) waypointVerticalMode = 1;
         waypointMultiMode = VUOS_ObjectiveHandler.GetCVarInt('vuos_waypoint_multi_mode', p, 0);
         automapMultiMode = VUOS_ObjectiveHandler.GetCVarInt('vuos_automap_multi_mode', p, 0);
     }

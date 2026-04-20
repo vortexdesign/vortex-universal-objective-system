@@ -105,6 +105,8 @@ user int obj_waypoint_max_distance = 0;
 // Waypoint rendering style: 0 = procedural (drawn with lines), 1 = textured (uses WPDMND graphic).
 // Falls back to procedural if textures are not found.
 user int obj_waypoint_style = 0;
+// Waypoint vertical projection mode: 0 = centered (pinned to screen midline, pitch ignored), 1 = fixed (pinned to world position, full 3D projection)
+user int obj_waypoint_vertical_mode = 1;
 
 // ============================================================================
 // Compass Ribbon Settings
@@ -165,6 +167,42 @@ user bool vuos_auto_waypoints = true;
 user bool vuos_auto_secret_waypoints = false;
 // Show brief HUD notification on map load when auto-objectives are generated
 user bool vuos_auto_notify = true;
+
+// ============================================================================
+// Random Objectives Settings (0.4.0 random layer, requires VUOS_RandomObjectives)
+// ============================================================================
+// Master toggle for the random objectives layer. Default OFF so deterministic
+// auto-objective behavior is preserved for upgraders. Players opt in here.
+user bool vuos_random_enabled = false;
+// User-provided salt folded into the per-map seed. Change to reroll without
+// changing map or skill. Range: any int.
+user int vuos_random_seed_salt = 0;
+// Guarantee at least N objectives per map. 0 = no floor (allow empty maps if
+// all rolls fail). Default 1 forces a fallback exit objective if everything else rolls out.
+user int vuos_random_min_floor = 1;
+// Apply skill-based multiplier to elite chance and boss category chance
+// (higher skill = more elites and bosses). Off = use raw chance values.
+user bool vuos_random_skill_weighting = true;
+
+// Per-category spawn chance (0-100, rolled once per map load with the seeded RNG)
+user int vuos_random_chance_keys = 90;
+user int vuos_random_chance_puzzleitems = 90;
+user int vuos_random_chance_bosses = 75;
+user int vuos_random_chance_exit = 100;
+user int vuos_random_chance_secretexit = 50;
+user int vuos_random_chance_kills = 60;
+user int vuos_random_chance_secrets = 60;
+
+// Subset sampling: pick N random candidates from the discovered pool (0 = use all)
+// Only applies to discovery-based categories that scan the map for candidates
+user int vuos_random_sample_keys = 0;
+user int vuos_random_sample_puzzleitems = 0;
+user int vuos_random_sample_bosses = 0;
+
+// Elite/bounty tier
+user int vuos_random_elite_chance = 10;
+// 0=off, 1=primary, 2=secondary
+user int vuos_random_elite_priority = 2;
 
 // ============================================================================
 // Debug Settings

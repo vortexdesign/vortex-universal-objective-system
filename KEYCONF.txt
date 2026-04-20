@@ -28,3 +28,8 @@ alias obj_complete_all "netevent obj_complete_all"
 alias obj_test "netevent obj_test"
 alias obj_complete_test "netevent obj_complete_test"
 alias vuos_auto_list "netevent vuos_auto_list"
+// vuos_random_reset chains direct `set` commands. Going through the netevent
+// path with CVar.SetInt() did not reliably persist user-scope CVars across
+// game restarts (the userinfo CVar wrapper does not propagate through that
+// code path). The console `set` command does propagate properly.
+alias vuos_random_reset "set vuos_random_enabled 0; set vuos_random_seed_salt 0; set vuos_random_min_floor 1; set vuos_random_skill_weighting 1; set vuos_random_chance_keys 90; set vuos_random_chance_puzzleitems 90; set vuos_random_chance_bosses 75; set vuos_random_chance_exit 100; set vuos_random_chance_secretexit 50; set vuos_random_chance_kills 60; set vuos_random_chance_secrets 60; set vuos_random_sample_keys 0; set vuos_random_sample_puzzleitems 0; set vuos_random_sample_bosses 0; set vuos_random_elite_chance 10; set vuos_random_elite_priority 2; echo VUOS RANDOM: Reset 16 CVars to defaults"

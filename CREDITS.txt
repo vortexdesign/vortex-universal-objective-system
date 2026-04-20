@@ -1,4 +1,4 @@
-Vortex's Universal Objective System
+Vortex's Universal Objective System (VUOS)
 Copyright (c) 2026 Vortex
 
 Blade of Agony
