@@ -17,6 +17,7 @@ Inspired by Blade of Agony, Hellscape Navigator, and Cynic Games Minimap.
 1. Load the VUOS PK3 file alongside any GZDoom/UZDoom mod
 2. Auto-generated objectives will appear for keys, bosses, exits, kills, and secrets
 3. Customize what gets generated in **Options > Universal Objectives > Auto Objectives**
+4. Optionally enable the random objectives layer for replayability variety. Each map can roll different objectives based on per-category spawn chances, with an optional rare "bounty" tier (e.g. "[BOUNTY] Slay the Cyberdemon"). Off by default, configure in **Options > Universal Objectives > Random Objectives Layer**.
 
 ## Getting Started (Modders)
 
@@ -348,6 +349,21 @@ virtual void OnAllRequiredComplete() {}
 - Syncs waypoint objectives to minimap waypoints
 - Zero overhead when minimap is not loaded
 
+### Random Objectives Layer (0.4.0+)
+Optional layer on top of the auto-generator that rerolls which objectives appear per map. Off by default so upgraders get unchanged behavior; players opt in via menu or `vuos_random_enabled 1`.
+
+- **Per-category spawn chance** (0-100%): each category (keys, puzzle items, bosses, exit, secret exit, kills, secrets) rolls independently per map. Defaults are tuned conservative (90% for keys, 100% for exit, 50-60% for the rest)
+- **Subset sampling**: when a category has multiple candidates (e.g. 3 different key types on the map), pick N random ones instead of always all of them
+- **Elite "bounty" tier**: rare additional objective (default 10% chance) that injects a hunt for a specific boss, key recovery, or kill-all challenge with a `[BOUNTY]` prefix in the description. Tier priority is boss > key > puzzle > kill-all fallback
+- **Skill weighting**: optional multiplier on elite chance from 0.5x at ITYTD up to 1.75x at Nightmare
+- **Minimum floor**: guarantee at least N objectives per map so bad rolls don't leave the map empty
+- **Deterministic seeding**: same map + same skill + same salt produces the same roll outcomes; reload a save and you get the same objectives back
+- **Reroll any time**: change `vuos_random_seed_salt` to get a fresh roll without changing map or skill
+- **Live menu changes**: any setting tweak in the menu triggers automatic regeneration on the current map (no reload needed)
+- **One-click reset**: "Reset Random Settings to Defaults" menu item or the `vuos_random_reset` console command restores all 16 random CVars to their defaults
+
+For modders: the random layer also exposes `VUOS_RandomObjectives.ForceCategoryRoll(mapName, categoryName, result)` and `VUOS_RandomObjectives.ForceEliteClass(mapName, className)` static APIs for pinning specific outcomes on scripted maps. See the source for full signatures.
+
 ## Multiplayer / Co-op Notes
 
 VUOS is primarily a single-player system, but its architecture avoids multiplayer desync by design. If your mod supports co-op, here's what you need to know:
@@ -443,6 +459,8 @@ obj_clear          - Clear all objectives
 obj_test           - Add test objectives
 obj_complete_test  - Complete first active objective
 obj_complete_all   - Complete ALL active objectives
+vuos_auto_list     - Auto-objective debug info (requires obj_debug 1)
+vuos_random_reset  - Reset all 16 vuos_random_* CVars to their defaults
 ```
 
 ## ACS Bridge Scripts
@@ -600,6 +618,18 @@ class ExitTrigger : Actor
 ## Changelog
 
 ### v0.4.0 (April 2026)
+
+**Random Objectives Layer (new)**
+- New optional `VUOS_RandomObjectives` EventHandler that adds a seeded randomization layer on top of the auto-generator. Default OFF via `vuos_random_enabled` so upgraders get unchanged behavior; players opt in via menu or console.
+- Per-category spawn chance CVars (0-100%) for keys, puzzle items, bosses, exit, secret exit, kills, and secrets. Each category rolls independently per map load with the seeded RNG.
+- Subset sampling for keys/puzzle items/bosses: pick N random classes from the discovered pool instead of always generating objectives for ALL candidates. New CVars `vuos_random_sample_keys`, `vuos_random_sample_puzzleitems`, `vuos_random_sample_bosses`.
+- Elite "bounty" tier: rare additional objective (default 10% chance, modifiable) that injects a focused hunt with `[BOUNTY]` description prefix. Tier priority is boss > key > puzzle > kill-all sentinel. Includes optional skill weighting (0.5x at ITYTD up to 1.75x at Nightmare) so elites scale with difficulty.
+- Minimum floor fallback (`vuos_random_min_floor`, default 1): if all category rolls fail and the map would be empty, force-generates exit (and kill-all if needed) so the player always has at least one objective.
+- Deterministic seeding via FNV-1a hash of `level.MapName + skill + vuos_random_seed_salt`. Same inputs always produce the same roll outcomes; save/reload preserves the rolled objective set. Change `vuos_random_seed_salt` to reroll without changing map or skill.
+- Mid-map regeneration: any `vuos_random_*` CVar change (via menu or console) triggers automatic regeneration on the current map without needing a map reload.
+- Modder Force* APIs: `VUOS_RandomObjectives.ForceCategoryRoll(mapName, categoryName, result)` pins a category's outcome on a specific map; `ForceEliteClass(mapName, className)` pins which class becomes the elite bounty. Both mirror the existing `SuppressMap()` pattern.
+- New `vuos_random_reset` console alias chains `set` commands to restore all 16 `vuos_random_*` CVars to their defaults in one command. Available via menu as a SafeCommand item too.
+- Full menu integration under **Options > Universal Objectives > Random Objectives Layer** with sliders for every CVar plus the reset action.
 
 **Waypoint Fixes**
 - Fixed pitch sign bug where on-screen waypoint indicators appeared to move WITH the player's aim instead of against it. Waypoints now correctly stay pinned to their world position when looking up or down.
